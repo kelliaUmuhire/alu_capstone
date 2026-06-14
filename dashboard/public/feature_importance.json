@@ -1,0 +1,34 @@
+[
+  {
+    "feature":"ndvi_real",
+    "importance":0.2194987203
+  },
+  {
+    "feature":"ndbi_real",
+    "importance":0.2054222281
+  },
+  {
+    "feature":"building_density_per_ha_real",
+    "importance":0.1945569583
+  },
+  {
+    "feature":"mndwi_real",
+    "importance":0.1070221686
+  },
+  {
+    "feature":"slope_degrees_real",
+    "importance":0.0965879126
+  },
+  {
+    "feature":"road_density_m_per_ha_real",
+    "importance":0.0878581408
+  },
+  {
+    "feature":"elevation_m_real",
+    "importance":0.0799090159
+  },
+  {
+    "feature":"flood_zone_overlap_real",
+    "importance":0.0091448555
+  }
+]

@@ -1,9 +1,0 @@
-feature,importance
-ndvi_real,0.2194987203134144
-ndbi_real,0.20542222812964606
-building_density_per_ha_real,0.19455695834494957
-mndwi_real,0.10702216855730275
-slope_degrees_real,0.09658791255747703
-road_density_m_per_ha_real,0.08785814075708288
-elevation_m_real,0.07990901587360832
-flood_zone_overlap_real,0.009144855466518857

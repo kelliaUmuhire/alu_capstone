@@ -1,0 +1,93 @@
+﻿district_source,source_file,source_sheet,source_block,source_column,output_feature_prefix
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,district_and_sectors,census__gasabo__table_1_residence_area__block_1__district_and_sectors
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,total,census__gasabo__table_1_residence_area__block_1__total
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,urban,census__gasabo__table_1_residence_area__block_1__urban
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,rural,census__gasabo__table_1_residence_area__block_1__rural
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,total_2,census__gasabo__table_1_residence_area__block_1__total_2
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,unnamed_column_6,census__gasabo__table_1_residence_area__block_1__unnamed_column_6
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,urban_2,census__gasabo__table_1_residence_area__block_1__urban_2
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,rural_2,census__gasabo__table_1_residence_area__block_1__rural_2
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,unnamed_column_9,census__gasabo__table_1_residence_area__block_1__unnamed_column_9
+gasabo,gasabo_population.xlsx,Table 2 - Sex,1,kigali,census__gasabo__table_2_sex__block_1__kigali
+gasabo,gasabo_population.xlsx,Table 2 - Sex,1,city_of_kigali,census__gasabo__table_2_sex__block_1__city_of_kigali
+gasabo,gasabo_population.xlsx,Table 2 - Sex,1,1745555,census__gasabo__table_2_sex__block_1__1745555
+gasabo,gasabo_population.xlsx,Table 2 - Sex,1,888882,census__gasabo__table_2_sex__block_1__888882
+gasabo,gasabo_population.xlsx,Table 2 - Sex,1,856673,census__gasabo__table_2_sex__block_1__856673
+gasabo,gasabo_population.xlsx,Table 2 - Sex,1,100,census__gasabo__table_2_sex__block_1__100
+gasabo,gasabo_population.xlsx,Table 2 - Sex,1,50_9,census__gasabo__table_2_sex__block_1__50_9
+gasabo,gasabo_population.xlsx,Table 2 - Sex,1,49_1,census__gasabo__table_2_sex__block_1__49_1
+gasabo,gasabo_population.xlsx,Table 3 - Age group & sex,1,gasabo_district,census__gasabo__table_3_age_group_sex__block_1__gasabo_district
+gasabo,gasabo_population.xlsx,Table 3 - Age group & sex,1,879505,census__gasabo__table_3_age_group_sex__block_1__879505
+gasabo,gasabo_population.xlsx,Table 3 - Age group & sex,1,443987,census__gasabo__table_3_age_group_sex__block_1__443987
+gasabo,gasabo_population.xlsx,Table 3 - Age group & sex,1,435518,census__gasabo__table_3_age_group_sex__block_1__435518
+gasabo,gasabo_population.xlsx,Table 3 - Age group & sex,1,100,census__gasabo__table_3_age_group_sex__block_1__100
+gasabo,gasabo_population.xlsx,Table 3 - Age group & sex,1,100_2,census__gasabo__table_3_age_group_sex__block_1__100_2
+gasabo,gasabo_population.xlsx,Table 3 - Age group & sex,1,100_3,census__gasabo__table_3_age_group_sex__block_1__100_3
+kicukiro,kicukiro_population.xlsx,Table 1 - Residence area,1,rwanda,census__kicukiro__table_1_residence_area__block_1__rwanda
+kicukiro,kicukiro_population.xlsx,Table 1 - Residence area,1,13246394,census__kicukiro__table_1_residence_area__block_1__13246394
+kicukiro,kicukiro_population.xlsx,Table 1 - Residence area,1,3701245,census__kicukiro__table_1_residence_area__block_1__3701245
+kicukiro,kicukiro_population.xlsx,Table 1 - Residence area,1,9545149,census__kicukiro__table_1_residence_area__block_1__9545149
+kicukiro,kicukiro_population.xlsx,Table 1 - Residence area,1,100,census__kicukiro__table_1_residence_area__block_1__100
+kicukiro,kicukiro_population.xlsx,Table 1 - Residence area,1,27_9,census__kicukiro__table_1_residence_area__block_1__27_9
+kicukiro,kicukiro_population.xlsx,Table 1 - Residence area,1,72_1,census__kicukiro__table_1_residence_area__block_1__72_1
+kicukiro,kicukiro_population.xlsx,Table 2 - Sex,1,kicukiro_district,census__kicukiro__table_2_sex__block_1__kicukiro_district
+kicukiro,kicukiro_population.xlsx,Table 2 - Sex,1,491731,census__kicukiro__table_2_sex__block_1__491731
+kicukiro,kicukiro_population.xlsx,Table 2 - Sex,1,249115,census__kicukiro__table_2_sex__block_1__249115
+kicukiro,kicukiro_population.xlsx,Table 2 - Sex,1,242616,census__kicukiro__table_2_sex__block_1__242616
+kicukiro,kicukiro_population.xlsx,Table 2 - Sex,1,100,census__kicukiro__table_2_sex__block_1__100
+kicukiro,kicukiro_population.xlsx,Table 2 - Sex,1,50_7,census__kicukiro__table_2_sex__block_1__50_7
+kicukiro,kicukiro_population.xlsx,Table 2 - Sex,1,49_3,census__kicukiro__table_2_sex__block_1__49_3
+kicukiro,kicukiro_population.xlsx,Table 2 - Sex,1,100_2,census__kicukiro__table_2_sex__block_1__100_2
+kicukiro,kicukiro_population.xlsx,Table 3 - Age group & sex,1,kicukiro_district,census__kicukiro__table_3_age_group_sex__block_1__kicukiro_district
+kicukiro,kicukiro_population.xlsx,Table 3 - Age group & sex,1,491731,census__kicukiro__table_3_age_group_sex__block_1__491731
+kicukiro,kicukiro_population.xlsx,Table 3 - Age group & sex,1,249115,census__kicukiro__table_3_age_group_sex__block_1__249115
+kicukiro,kicukiro_population.xlsx,Table 3 - Age group & sex,1,242616,census__kicukiro__table_3_age_group_sex__block_1__242616
+kicukiro,kicukiro_population.xlsx,Table 3 - Age group & sex,1,100,census__kicukiro__table_3_age_group_sex__block_1__100
+kicukiro,kicukiro_population.xlsx,Table 3 - Age group & sex,1,100_2,census__kicukiro__table_3_age_group_sex__block_1__100_2
+kicukiro,kicukiro_population.xlsx,Table 3 - Age group & sex,1,100_3,census__kicukiro__table_3_age_group_sex__block_1__100_3
+musanze,musanze_population.xlsx,Table 1 - Residence area,1,rwanda,census__musanze__table_1_residence_area__block_1__rwanda
+musanze,musanze_population.xlsx,Table 1 - Residence area,1,13246394,census__musanze__table_1_residence_area__block_1__13246394
+musanze,musanze_population.xlsx,Table 1 - Residence area,1,3701245,census__musanze__table_1_residence_area__block_1__3701245
+musanze,musanze_population.xlsx,Table 1 - Residence area,1,9545149,census__musanze__table_1_residence_area__block_1__9545149
+musanze,musanze_population.xlsx,Table 1 - Residence area,1,100,census__musanze__table_1_residence_area__block_1__100
+musanze,musanze_population.xlsx,Table 1 - Residence area,1,27_9,census__musanze__table_1_residence_area__block_1__27_9
+musanze,musanze_population.xlsx,Table 1 - Residence area,1,72_1,census__musanze__table_1_residence_area__block_1__72_1
+musanze,musanze_population.xlsx,Table 2 - Sex,1,rwanda,census__musanze__table_2_sex__block_1__rwanda
+musanze,musanze_population.xlsx,Table 2 - Sex,1,13246394,census__musanze__table_2_sex__block_1__13246394
+musanze,musanze_population.xlsx,Table 2 - Sex,1,6429326,census__musanze__table_2_sex__block_1__6429326
+musanze,musanze_population.xlsx,Table 2 - Sex,1,6817068,census__musanze__table_2_sex__block_1__6817068
+musanze,musanze_population.xlsx,Table 2 - Sex,1,100,census__musanze__table_2_sex__block_1__100
+musanze,musanze_population.xlsx,Table 2 - Sex,1,48_5,census__musanze__table_2_sex__block_1__48_5
+musanze,musanze_population.xlsx,Table 2 - Sex,1,51_5,census__musanze__table_2_sex__block_1__51_5
+musanze,musanze_population.xlsx,Table 2 - Sex,1,unnamed,census__musanze__table_2_sex__block_1__unnamed
+musanze,musanze_population.xlsx,Table 3 - Age group & sex,1,musanze_district,census__musanze__table_3_age_group_sex__block_1__musanze_district
+musanze,musanze_population.xlsx,Table 3 - Age group & sex,1,476522,census__musanze__table_3_age_group_sex__block_1__476522
+musanze,musanze_population.xlsx,Table 3 - Age group & sex,1,227340,census__musanze__table_3_age_group_sex__block_1__227340
+musanze,musanze_population.xlsx,Table 3 - Age group & sex,1,249182,census__musanze__table_3_age_group_sex__block_1__249182
+musanze,musanze_population.xlsx,Table 3 - Age group & sex,1,100,census__musanze__table_3_age_group_sex__block_1__100
+musanze,musanze_population.xlsx,Table 3 - Age group & sex,1,100_2,census__musanze__table_3_age_group_sex__block_1__100_2
+musanze,musanze_population.xlsx,Table 3 - Age group & sex,1,100_3,census__musanze__table_3_age_group_sex__block_1__100_3
+nyarugenge,nyarugenge_population.xlsx,Table 1 - Residence area,1,rwanda,census__nyarugenge__table_1_residence_area__block_1__rwanda
+nyarugenge,nyarugenge_population.xlsx,Table 1 - Residence area,1,unnamed_column_2,census__nyarugenge__table_1_residence_area__block_1__unnamed_column_2
+nyarugenge,nyarugenge_population.xlsx,Table 1 - Residence area,1,13246394,census__nyarugenge__table_1_residence_area__block_1__13246394
+nyarugenge,nyarugenge_population.xlsx,Table 1 - Residence area,1,3701245,census__nyarugenge__table_1_residence_area__block_1__3701245
+nyarugenge,nyarugenge_population.xlsx,Table 1 - Residence area,1,9545149,census__nyarugenge__table_1_residence_area__block_1__9545149
+nyarugenge,nyarugenge_population.xlsx,Table 1 - Residence area,1,100,census__nyarugenge__table_1_residence_area__block_1__100
+nyarugenge,nyarugenge_population.xlsx,Table 1 - Residence area,1,27_9,census__nyarugenge__table_1_residence_area__block_1__27_9
+nyarugenge,nyarugenge_population.xlsx,Table 1 - Residence area,1,72_1,census__nyarugenge__table_1_residence_area__block_1__72_1
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,nyarugenge_district,census__nyarugenge__table_2_sex__block_1__nyarugenge_district
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,374319,census__nyarugenge__table_2_sex__block_1__374319
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,195780,census__nyarugenge__table_2_sex__block_1__195780
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,178539,census__nyarugenge__table_2_sex__block_1__178539
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,100,census__nyarugenge__table_2_sex__block_1__100
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,52_3,census__nyarugenge__table_2_sex__block_1__52_3
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,47_7,census__nyarugenge__table_2_sex__block_1__47_7
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,100_2,census__nyarugenge__table_2_sex__block_1__100_2
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,unnamed_column_9,census__nyarugenge__table_2_sex__block_1__unnamed_column_9
+nyarugenge,nyarugenge_population.xlsx,Table 3 - Age group & Sex,1,nyarugenge_district,census__nyarugenge__table_3_age_group_sex__block_1__nyarugenge_district
+nyarugenge,nyarugenge_population.xlsx,Table 3 - Age group & Sex,1,374319,census__nyarugenge__table_3_age_group_sex__block_1__374319
+nyarugenge,nyarugenge_population.xlsx,Table 3 - Age group & Sex,1,195780,census__nyarugenge__table_3_age_group_sex__block_1__195780
+nyarugenge,nyarugenge_population.xlsx,Table 3 - Age group & Sex,1,178539,census__nyarugenge__table_3_age_group_sex__block_1__178539
+nyarugenge,nyarugenge_population.xlsx,Table 3 - Age group & Sex,1,100,census__nyarugenge__table_3_age_group_sex__block_1__100
+nyarugenge,nyarugenge_population.xlsx,Table 3 - Age group & Sex,1,100_2,census__nyarugenge__table_3_age_group_sex__block_1__100_2
+nyarugenge,nyarugenge_population.xlsx,Table 3 - Age group & Sex,1,100_3,census__nyarugenge__table_3_age_group_sex__block_1__100_3

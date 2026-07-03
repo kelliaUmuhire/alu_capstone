@@ -3,3 +3,8 @@ numpy
 scikit-learn
 matplotlib
 joblib
+catboost
+geopandas
+openpyxl
+shapely
+jupyter

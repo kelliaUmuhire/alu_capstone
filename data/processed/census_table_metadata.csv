@@ -1,0 +1,13 @@
+﻿district_source,source_file,source_sheet,source_block,status,header_method,header_rows_zero_based,candidate_sector_column,sector_join_method,row_count,columns_json
+gasabo,gasabo_population.xlsx,Table 1 - Residence area,1,parsed,auto,[1],,not_detected,18,"[""district_and_sectors"", ""total"", ""urban"", ""rural"", ""total_2"", ""unnamed_column_6"", ""urban_2"", ""rural_2"", ""unnamed_column_9""]"
+gasabo,gasabo_population.xlsx,Table 2 - Sex,1,parsed,auto,[3],,not_detected,16,"[""kigali"", ""city_of_kigali"", ""1745555"", ""888882"", ""856673"", ""100"", ""50_9"", ""49_1""]"
+gasabo,gasabo_population.xlsx,Table 3 - Age group & sex,1,parsed,auto,[2],,not_detected,18,"[""gasabo_district"", ""879505"", ""443987"", ""435518"", ""100"", ""100_2"", ""100_3""]"
+kicukiro,kicukiro_population.xlsx,Table 1 - Residence area,1,parsed,auto,[2],,not_detected,12,"[""rwanda"", ""13246394"", ""3701245"", ""9545149"", ""100"", ""27_9"", ""72_1""]"
+kicukiro,kicukiro_population.xlsx,Table 2 - Sex,1,parsed,auto,[4],,not_detected,10,"[""kicukiro_district"", ""491731"", ""249115"", ""242616"", ""100"", ""50_7"", ""49_3"", ""100_2""]"
+kicukiro,kicukiro_population.xlsx,Table 3 - Age group & sex,1,parsed,auto,[2],,not_detected,18,"[""kicukiro_district"", ""491731"", ""249115"", ""242616"", ""100"", ""100_2"", ""100_3""]"
+musanze,musanze_population.xlsx,Table 1 - Residence area,1,parsed,auto,[2],,not_detected,17,"[""rwanda"", ""13246394"", ""3701245"", ""9545149"", ""100"", ""27_9"", ""72_1""]"
+musanze,musanze_population.xlsx,Table 2 - Sex,1,parsed,auto,[2],,not_detected,17,"[""rwanda"", ""13246394"", ""6429326"", ""6817068"", ""100"", ""48_5"", ""51_5"", ""unnamed""]"
+musanze,musanze_population.xlsx,Table 3 - Age group & sex,1,parsed,auto,[2],,not_detected,18,"[""musanze_district"", ""476522"", ""227340"", ""249182"", ""100"", ""100_2"", ""100_3""]"
+nyarugenge,nyarugenge_population.xlsx,Table 1 - Residence area,1,parsed,auto,[2],,not_detected,12,"[""rwanda"", ""unnamed_column_2"", ""13246394"", ""3701245"", ""9545149"", ""100"", ""27_9"", ""72_1""]"
+nyarugenge,nyarugenge_population.xlsx,Table 2 - Sex,1,parsed,auto,[4],,not_detected,10,"[""nyarugenge_district"", ""374319"", ""195780"", ""178539"", ""100"", ""52_3"", ""47_7"", ""100_2"", ""unnamed_column_9""]"
+nyarugenge,nyarugenge_population.xlsx,Table 3 - Age group & Sex,1,parsed,auto,[2],,not_detected,18,"[""nyarugenge_district"", ""374319"", ""195780"", ""178539"", ""100"", ""100_2"", ""100_3""]"

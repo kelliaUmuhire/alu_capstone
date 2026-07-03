@@ -1,0 +1,8 @@
+﻿input_label,source_path,copied_path,size_bytes,sha256
+census_gasabo,/Users/kellia.umuhire/Documents/capstone_dataset/gasabo_population.xlsx,/Users/kellia.umuhire/Documents/capstone/data/raw/gasabo_population.xlsx,14010,c34695dfc10da6170a67affa16ae5955af71ba0edcb59776f7642fa6a95373bf
+census_kicukiro,/Users/kellia.umuhire/Documents/capstone_dataset/kicukiro_population.xlsx,/Users/kellia.umuhire/Documents/capstone/data/raw/kicukiro_population.xlsx,13402,9438ebcb890a12110b7cc3015193a9ea2aaf5f5230c91c4779c6f81b9916e371
+census_musanze,/Users/kellia.umuhire/Documents/capstone_dataset/musanze_population.xlsx,/Users/kellia.umuhire/Documents/capstone/data/raw/musanze_population.xlsx,14061,63c246dfc2e0081ccf6a1162039ee968ccc5aa9de899f96bd497edf4b7363579
+census_nyarugenge,/Users/kellia.umuhire/Documents/capstone_dataset/nyarugenge_population.xlsx,/Users/kellia.umuhire/Documents/capstone/data/raw/nyarugenge_population.xlsx,13564,9ea0e9ce1b77056d977b35e3712e84f5c4cd9028c27e3e83cff93c01f27766c9
+sector_geojson,/Users/kellia.umuhire/Downloads/gadm41_RWA_3.json,/Users/kellia.umuhire/Documents/capstone/data/raw/gadm41_RWA_3.json,592942,2e4be31c8614e8734f440c37763de8a0af6c5164b785c2cc9407fbe53805db0d
+sentinel_musanze,/Users/kellia.umuhire/Downloads/musanze_features.csv,/Users/kellia.umuhire/Documents/capstone/data/raw/musanze_features.csv,4256892,8657d22bebd243a9047d9963c6518d767ff670e968606444c2c2e6067cbe7f0f
+sentinel_kigali,/Users/kellia.umuhire/Downloads/kigali_features.csv,/Users/kellia.umuhire/Documents/capstone/data/raw/kigali_features.csv,4421280,afad4e2a556d525ff77c40c48123589c7a8b131718ea7a761b0bf14e51911f04

@@ -1,0 +1,43 @@
+{
+  "training_unit": "sector_subunit",
+  "training_row_count": 500,
+  "independent_sector_count": 50,
+  "target": "proxy_class",
+  "target_source": "/Users/kellia.umuhire/Documents/capstone/data/labels/sector_vulnerability_proxy_labels.csv",
+  "feature_source": "/Users/kellia.umuhire/Documents/capstone/data/processed/sector_subunit_x10_dataset.csv",
+  "feature_columns": [
+    "sentinel__elevation__subunit_mean",
+    "sentinel__elevation__subunit_std",
+    "sentinel__ndvi__subunit_mean",
+    "sentinel__ndvi__subunit_std",
+    "sentinel__ndbi__subunit_mean",
+    "sentinel__ndbi__subunit_std",
+    "sentinel__mndwi__subunit_mean",
+    "sentinel__mndwi__subunit_std",
+    "sentinel__slope__subunit_mean",
+    "sentinel__slope__subunit_std"
+  ],
+  "excluded_feature_categories": [
+    "Census variables used to construct proxy labels",
+    "Coordinates (latitude and longitude)",
+    "Sentinel observation-count fields",
+    "Raw or repeated observation-level rows"
+  ],
+  "evaluation": "leave_one_district_out",
+  "districts": [
+    "Gasabo",
+    "Kicukiro",
+    "Musanze",
+    "Nyarugenge"
+  ],
+  "class_counts": {
+    "Low": 170,
+    "Medium": 160,
+    "High": 170
+  },
+  "limitations": [
+    "Only 50 independent sector labels are available.",
+    "The target is a census-informed proxy, not an official Ubudehe category.",
+    "Performance estimates have high uncertainty and should be treated as pilot results."
+  ]
+}

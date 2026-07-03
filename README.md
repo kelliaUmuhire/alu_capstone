@@ -1,69 +1,87 @@
-# Kigali Vulnerability MVP
+# Rwanda Sector Vulnerability Assessment
 
-This folder contains the MVP workspace for an AI-powered decision support tool that ranks vulnerable informal settlements using Sentinel-2/SRTM-derived features and OSM-derived physical indicators.
+This repository builds and serves a sector-level vulnerability assessment for
+Gasabo, Kicukiro, Musanze, and Nyarugenge. It combines Sentinel-2-derived
+features, census tables, and GADM level-3 administrative boundaries.
 
-## Github link: https://github.com/kelliaUmuhire/alu_capstone
+The current target is a transparent census-informed proxy label. It is not an
+official Ubudehe category and must not be interpreted as a household poverty
+classification or a field-validated vulnerability measure.
 
-## Video link: https://drive.google.com/file/d/1qqzZHcINouBCACHKr0v4XObvt1NCkt_m/view?usp=sharing
+## Repository structure
 
-## Folder structure
+- `app/api/` - FastAPI service for assessments, metrics, map geometry, and predictions.
+- `app/dashboard/` - React/Vite sector vulnerability dashboard.
+- `scripts/` - dataset, proxy-label, and model-training pipelines.
+- `notebooks/` - executable model-training and analysis notebook.
+- `data/raw/` - unchanged supplied census, Sentinel-2, and boundary files.
+- `data/processed/` - joined, audited, and sector/subunit-level datasets.
+- `data/labels/` - rule-based vulnerability proxy labels and methodology audits.
+- `data/model_outputs/` - model assessments, performance tables, plots, and reports.
+- `models/` - trained Random Forest and CatBoost model artifacts.
+- `archive/initial_kigali_mvp/` - preserved initial informal-settlement MVP.
 
-- `data/real_features.csv` - extracted raster and OSM model features
-- `data/settlement_coordinates.csv` - settlement metadata and coordinates
-- `notebooks/vulnerability_random_forest_proxy.ipynb` - Random Forest MVP notebook
-- `outputs/proxy_vulnerability_rankings.csv` - current proxy-ranked settlements
-- `models/` - notebook will save the trained model here
-- `dashboard/` - placeholder for the React dashboard mockup
-- `api/` - placeholder for the FastAPI service
-- `scripts/build_proxy_rankings.py` - small helper that creates the proxy ranking CSV without training the model
-- `requirements.txt` - Python modeling requirements for the notebook
-
-## Run the notebook
-
-From this folder:
+## Python setup
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-jupyter notebook notebooks/vulnerability_random_forest_proxy.ipynb
+pip install -r app/api/requirements.txt
 ```
 
-Then run all cells. The notebook will save:
+## Rebuild the data
 
-- `outputs/settlement_vulnerability_rankings.csv`
-- `outputs/feature_importance.csv`
-- `models/vulnerability_random_forest.joblib`
-
-## Rebuild the proxy ranking CSV
+Run these commands from the repository root:
 
 ```bash
-python scripts/build_proxy_rankings.py
+python scripts/build_dataset.py --overwrite
+python scripts/build_sector_vulnerability_proxy.py --overwrite
 ```
 
+The dataset builder reads from `data/raw/` and writes derived tables to
+`data/processed/`. The proxy builder writes labels and audits to `data/labels/`.
 
-## Dashboard
+## Train the models
 
-The rough React dashboard is in `dashboard/`. It includes a lightweight settlement map, reads JSON exports from `dashboard/public/`, and can be run with a static server:
+Batch workflow:
 
 ```bash
-cd dashboard
-python3 -m http.server 5173
+python scripts/train_sector_proxy_models.py --overwrite
 ```
 
-Then open `http://127.0.0.1:5173`.
-
-## API
-
-The FastAPI service is in `api/`. It exposes rankings, settlement details, feature importance, and a model-backed prediction endpoint.
-
-From this folder:
+Notebook workflow:
 
 ```bash
-pip install -r api/requirements.txt
-uvicorn api.app.main:app --host 127.0.0.1 --port 8000
+jupyter notebook notebooks/sector_proxy_model_training.ipynb
 ```
 
-Then open:
+Both workflows use the x10 sector-subunit feature table, while evaluation and
+reporting preserve the 50 independent sector assessment units.
 
-- API root: `http://127.0.0.1:8000`
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- Health check: `http://127.0.0.1:8000/health`
+## Run the API
+
+```bash
+uvicorn app.api.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Swagger documentation is available at `http://127.0.0.1:8000/docs`.
+
+## Run the dashboard
+
+In another terminal:
+
+```bash
+cd app/dashboard
+pnpm install
+pnpm run dev
+```
+
+The dashboard is then available at `http://127.0.0.1:5173/` and expects the API
+on port `8000`.
+
+## Archived MVP
+
+The initial Kigali informal-settlement MVP is preserved under
+`archive/initial_kigali_mvp/`. It is kept for project history and comparison;
+the root-level sector workflow is the current solution.

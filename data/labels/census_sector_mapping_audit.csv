@@ -1,0 +1,122 @@
+﻿district_key,source_table,source_row_number,source_sector_name,sector_id,mapping_method,selected_for_proxy,mapping_status
+gasabo,residence_area,3,Rwanda,,unmatched,False,administrative_summary_not_a_sector
+gasabo,residence_area,4,City of Kigali,,unmatched,False,administrative_summary_not_a_sector
+gasabo,residence_area,5,Gasabo district,,unmatched,False,administrative_summary_not_a_sector
+gasabo,residence_area,6,Bumbogo,RWA.5.1.1_1,exact,True,selected_sector_record
+gasabo,residence_area,7,Gatsata,RWA.5.1.2_1,exact,True,selected_sector_record
+gasabo,residence_area,8,Gikomero,RWA.5.1.3_1,exact,True,selected_sector_record
+gasabo,residence_area,9,Gisozi,RWA.5.1.4_1,exact,True,selected_sector_record
+gasabo,residence_area,10,Jabana,RWA.5.1.5_1,exact,True,selected_sector_record
+gasabo,residence_area,11,Jali,RWA.5.1.6_1,exact,True,selected_sector_record
+gasabo,residence_area,12,Kacyiru,RWA.5.1.7_1,exact,True,selected_sector_record
+gasabo,residence_area,13,Kimihurura,RWA.5.1.8_1,exact,True,selected_sector_record
+gasabo,residence_area,14,Kimironko,RWA.5.1.9_1,exact,True,selected_sector_record
+gasabo,residence_area,15,Kinyinya,RWA.5.1.10_1,exact,True,selected_sector_record
+gasabo,residence_area,16,Ndera,RWA.5.1.11_1,exact,True,selected_sector_record
+gasabo,residence_area,17,Nduba,RWA.5.1.12_1,exact,True,selected_sector_record
+gasabo,residence_area,18,Remera,RWA.5.1.13_1,exact,True,selected_sector_record
+gasabo,residence_area,19,Rusororo,RWA.5.1.14_1,exact,True,selected_sector_record
+gasabo,residence_area,20,Rutunga,RWA.5.1.15_1,exact,True,selected_sector_record
+gasabo,sex,3,Rwanda,,unmatched,False,administrative_summary_not_a_sector
+gasabo,sex,5,Gasabo District,,unmatched,False,administrative_summary_not_a_sector
+gasabo,sex,6,Bumbogo,RWA.5.1.1_1,exact,True,selected_sector_record
+gasabo,sex,7,Gatsata,RWA.5.1.2_1,exact,True,selected_sector_record
+gasabo,sex,8,Gikomero,RWA.5.1.3_1,exact,True,selected_sector_record
+gasabo,sex,9,Gisozi,RWA.5.1.4_1,exact,True,selected_sector_record
+gasabo,sex,10,Jabana,RWA.5.1.5_1,exact,True,selected_sector_record
+gasabo,sex,11,Jali,RWA.5.1.6_1,exact,True,selected_sector_record
+gasabo,sex,12,Kac iru,RWA.5.1.7_1,fuzzy_review_required,True,selected_sector_record
+gasabo,sex,13,Kimihurura,RWA.5.1.8_1,exact,True,selected_sector_record
+gasabo,sex,14,Kimironko,RWA.5.1.9_1,exact,True,selected_sector_record
+gasabo,sex,15,Kin in a,RWA.5.1.10_1,alias,True,selected_sector_record
+gasabo,sex,16,Ndera,RWA.5.1.11_1,exact,True,selected_sector_record
+gasabo,sex,17,Nduba,RWA.5.1.12_1,exact,True,selected_sector_record
+gasabo,sex,18,Remera,RWA.5.1.13_1,exact,True,selected_sector_record
+gasabo,sex,19,Rusororo,RWA.5.1.14_1,exact,True,selected_sector_record
+gasabo,sex,20,Rutun a,RWA.5.1.15_1,fuzzy_review_required,True,selected_sector_record
+kicukiro,residence_area,3,Rwanda,,unmatched,False,administrative_summary_not_a_sector
+kicukiro,residence_area,4,City of Kigali,,unmatched,False,administrative_summary_not_a_sector
+kicukiro,residence_area,5,Kicukiro district,,unmatched,False,administrative_summary_not_a_sector
+kicukiro,residence_area,6,Gahan a,RWA.5.2.1_1,fuzzy_review_required,True,selected_sector_record
+kicukiro,residence_area,7,Gaten a,RWA.5.2.2_1,alias,True,selected_sector_record
+kicukiro,residence_area,8,Gikondo,RWA.5.2.3_1,exact,True,selected_sector_record
+kicukiro,residence_area,9,Ka arama,RWA.5.2.4_1,fuzzy_review_required,True,selected_sector_record
+kicukiro,residence_area,10,Kanombe,RWA.5.2.5_1,exact,True,selected_sector_record
+kicukiro,residence_area,11,Kicukiro,RWA.5.2.6_1,exact,True,selected_sector_record
+kicukiro,residence_area,12,Ki arama,RWA.5.2.7_1,alias,True,selected_sector_record
+kicukiro,residence_area,13,M as aka,RWA.5.2.8_1,fuzzy_review_required,True,selected_sector_record
+kicukiro,residence_area,14,Niboye,RWA.5.2.9_1,exact,True,selected_sector_record
+kicukiro,residence_area,15,N aru un a,RWA.5.2.10_1,alias,True,selected_sector_record
+kicukiro,sex,3,Rwanda,,unmatched,False,administrative_summary_not_a_sector
+kicukiro,sex,4,Kigali,,unmatched,False,administrative_summary_not_a_sector
+kicukiro,sex,5,Kicukiro District,,unmatched,False,administrative_summary_not_a_sector
+kicukiro,sex,6,Gahanga,RWA.5.2.1_1,exact,True,selected_sector_record
+kicukiro,sex,7,Gaten a,RWA.5.2.2_1,alias,True,selected_sector_record
+kicukiro,sex,8,Gikondo,RWA.5.2.3_1,exact,True,selected_sector_record
+kicukiro,sex,9,Kagarama,RWA.5.2.4_1,exact,True,selected_sector_record
+kicukiro,sex,10,Kanombe,RWA.5.2.5_1,exact,True,selected_sector_record
+kicukiro,sex,11,Kicukiro,RWA.5.2.6_1,exact,True,selected_sector_record
+kicukiro,sex,12,Kigarama,RWA.5.2.7_1,exact,True,selected_sector_record
+kicukiro,sex,13,Masaka,RWA.5.2.8_1,exact,True,selected_sector_record
+kicukiro,sex,14,Niboye,RWA.5.2.9_1,exact,True,selected_sector_record
+kicukiro,sex,15,Nyarugunga,RWA.5.2.10_1,exact,True,selected_sector_record
+musanze,residence_area,3,Rwanda,,unmatched,False,administrative_summary_not_a_sector
+musanze,residence_area,4,Northern Province,,unmatched,False,administrative_summary_not_a_sector
+musanze,residence_area,5,Musanze district,,unmatched,False,administrative_summary_not_a_sector
+musanze,residence_area,6,Busogo,RWA.1.4.1_1,exact,True,selected_sector_record
+musanze,residence_area,7,Cyuve,RWA.1.4.2_1,exact,True,selected_sector_record
+musanze,residence_area,8,Gacaca,RWA.1.4.3_1,exact,True,selected_sector_record
+musanze,residence_area,9,Gashaki,RWA.1.4.4_1,exact,True,selected_sector_record
+musanze,residence_area,10,Gataraga,RWA.1.4.5_1,exact,True,selected_sector_record
+musanze,residence_area,11,Kimonyi,RWA.1.4.6_1,exact,True,selected_sector_record
+musanze,residence_area,12,Kinigi,RWA.1.4.7_1,exact,True,selected_sector_record
+musanze,residence_area,13,Muhoza,RWA.1.4.8_1,exact,True,selected_sector_record
+musanze,residence_area,14,Muko,RWA.1.4.9_1,exact,True,selected_sector_record
+musanze,residence_area,15,Musanze,RWA.1.4.10_1,exact,True,selected_sector_record
+musanze,residence_area,16,Nkotsi,RWA.1.4.11_1,exact,True,selected_sector_record
+musanze,residence_area,17,Nyange,RWA.1.4.12_1,exact,True,selected_sector_record
+musanze,residence_area,18,Remera,RWA.1.4.13_1,exact,True,selected_sector_record
+musanze,residence_area,19,Rwaza,RWA.1.4.14_1,exact,True,selected_sector_record
+musanze,residence_area,20,Shingiro,RWA.1.4.15_1,exact,True,selected_sector_record
+musanze,sex,3,Rwanda,,unmatched,False,administrative_summary_not_a_sector
+musanze,sex,4,Northern Province,,unmatched,False,administrative_summary_not_a_sector
+musanze,sex,5,Musanze,RWA.1.4.10_1,exact,False,mapped_not_selected_duplicate_or_summary
+musanze,sex,6,Busogo,RWA.1.4.1_1,exact,True,selected_sector_record
+musanze,sex,7,Cyuve,RWA.1.4.2_1,exact,True,selected_sector_record
+musanze,sex,8,Gacaca,RWA.1.4.3_1,exact,True,selected_sector_record
+musanze,sex,9,Gashaki,RWA.1.4.4_1,exact,True,selected_sector_record
+musanze,sex,10,Gataraga,RWA.1.4.5_1,exact,True,selected_sector_record
+musanze,sex,11,Kimonyi,RWA.1.4.6_1,exact,True,selected_sector_record
+musanze,sex,12,Kinigi,RWA.1.4.7_1,exact,True,selected_sector_record
+musanze,sex,13,Muhoza,RWA.1.4.8_1,exact,True,selected_sector_record
+musanze,sex,14,Muko,RWA.1.4.9_1,exact,True,selected_sector_record
+musanze,sex,15,Musanze,RWA.1.4.10_1,exact,True,selected_sector_record
+musanze,sex,16,Nkotsi,RWA.1.4.11_1,exact,True,selected_sector_record
+musanze,sex,17,Nyange,RWA.1.4.12_1,exact,True,selected_sector_record
+musanze,sex,18,Remera,RWA.1.4.13_1,exact,True,selected_sector_record
+musanze,sex,19,Rwaza,RWA.1.4.14_1,exact,True,selected_sector_record
+musanze,sex,20,Shingiro,RWA.1.4.15_1,exact,True,selected_sector_record
+nyarugenge,residence_area,4,City of Kigali,,unmatched,False,administrative_summary_not_a_sector
+nyarugenge,residence_area,5,Nyarugenge district,,unmatched,False,administrative_summary_not_a_sector
+nyarugenge,residence_area,6,Gitega,RWA.5.3.1_1,exact,True,selected_sector_record
+nyarugenge,residence_area,7,Kan in a,RWA.5.3.2_1,alias,True,selected_sector_record
+nyarugenge,residence_area,8,Ki ali,RWA.5.3.3_1,alias,True,selected_sector_record
+nyarugenge,residence_area,9,Kimisa ara,RWA.5.3.4_1,alias,True,selected_sector_record
+nyarugenge,residence_area,10,Ma ere ere,RWA.5.3.5_1,alias,True,selected_sector_record
+nyarugenge,residence_area,11,Muhima,RWA.5.3.6_1,exact,True,selected_sector_record
+nyarugenge,residence_area,12,N akabanda,RWA.5.3.7_1,alias,True,selected_sector_record
+nyarugenge,residence_area,13,N amirambo,RWA.5.3.8_1,fuzzy_review_required,True,selected_sector_record
+nyarugenge,residence_area,14,N aru en e,RWA.5.3.9_1,alias,True,selected_sector_record
+nyarugenge,residence_area,15,Rwezamen o,RWA.5.3.10_1,fuzzy_review_required,True,selected_sector_record
+nyarugenge,sex,4,Kigali,RWA.5.3.3_1,exact,False,mapped_not_selected_duplicate_or_summary
+nyarugenge,sex,5,Nyarugenge District,,unmatched,False,administrative_summary_not_a_sector
+nyarugenge,sex,6,Gitenga,RWA.5.3.1_1,alias,True,selected_sector_record
+nyarugenge,sex,7,Kanyinya,RWA.5.3.2_1,exact,True,selected_sector_record
+nyarugenge,sex,8,Kigali,RWA.5.3.3_1,exact,True,selected_sector_record
+nyarugenge,sex,9,Kimisagara,RWA.5.3.4_1,exact,True,selected_sector_record
+nyarugenge,sex,10,Mageregere,RWA.5.3.5_1,exact,True,selected_sector_record
+nyarugenge,sex,11,Muhima,RWA.5.3.6_1,exact,True,selected_sector_record
+nyarugenge,sex,12,Nyakabanda,RWA.5.3.7_1,exact,True,selected_sector_record
+nyarugenge,sex,13,Nyamirambo,RWA.5.3.8_1,exact,True,selected_sector_record
+nyarugenge,sex,14,Nyarugenge,RWA.5.3.9_1,exact,True,selected_sector_record
+nyarugenge,sex,15,Rwezamenyo,RWA.5.3.10_1,exact,True,selected_sector_record

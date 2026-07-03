@@ -1,0 +1,13 @@
+﻿audit,value
+geojson_columns,"{""sector_id"": ""GID_3"", ""sector_name"": ""NAME_3"", ""district"": ""NAME_2""}"
+sentinel_coordinate_detection,"{""coordinate_method"": ""auto_lat_lon"", ""coordinate_columns"": ""latitude=latitude; longitude=longitude""}"
+geojson_sector_count,50
+census_record_count,184
+census_unmatched_record_count,184
+sentinel_row_count,18144
+sentinel_matched_row_count,11479
+sentinel_ambiguous_boundary_row_count,36
+sentinel_unmatched_row_count,6665
+sentinel_subunit_count_per_sector,10
+sector_subunit_dataset_row_count,500
+sector_subunit_dataset_file,sector_subunit_x10_dataset.csv

@@ -1,0 +1,51 @@
+{
+  "label_name": "census_informed_sector_vulnerability_proxy",
+  "not_official_ubudehe": true,
+  "assessment_unit": "sector",
+  "weights": {
+    "density_pressure": 0.4,
+    "rurality_context": 0.35,
+    "district_age_dependency_context": 0.25
+  },
+  "class_threshold_method": "study_area_score_tertiles",
+  "class_quantiles": {
+    "low_upper": 0.3333333333333333,
+    "medium_upper": 0.6666666666666666
+  },
+  "sector_level_indicators": [
+    "population_density_per_km2",
+    "rural_share"
+  ],
+  "district_only_context": [
+    "child_dependency_ratio",
+    "older_dependency_ratio",
+    "total_age_dependency_ratio"
+  ],
+  "analytics_only_not_scored": [
+    "female_share",
+    "sex_ratio_male_per_100_female"
+  ],
+  "sensitivity_scenarios": {
+    "base": {
+      "density_pressure": 0.4,
+      "rurality_context": 0.35,
+      "district_age_dependency_context": 0.25
+    },
+    "density_heavy": {
+      "density_pressure": 0.6,
+      "rurality_context": 0.25,
+      "district_age_dependency_context": 0.15
+    },
+    "rurality_heavy": {
+      "density_pressure": 0.25,
+      "rurality_context": 0.6,
+      "district_age_dependency_context": 0.15
+    }
+  },
+  "limitations": [
+    "Does not assign household Ubudehe Categories A-E.",
+    "Does not measure assets, income, labour capacity, disability, chronic illness, or livelihoods.",
+    "Age composition is available only at district level in the supplied workbooks.",
+    "Proxy score is a prioritisation aid and requires stakeholder review before operational use."
+  ]
+}

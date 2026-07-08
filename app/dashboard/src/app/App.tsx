@@ -323,8 +323,8 @@ export default function App() {
         setLoading(true);
         const [dashboardResponse, sectorsResponse, geoResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/api/dashboard`),
-          fetch("/api/sectors?limit=500"),
-          fetch("/api/map/sectors.geojson"),
+          fetch(`${API_BASE_URL}/api/sectors?limit=500`),
+          fetch(`${API_BASE_URL}/api/map/sectors.geojson`),
         ]);
         if (!dashboardResponse.ok || !sectorsResponse.ok || !geoResponse.ok) {
           throw new Error("FastAPI returned an error while loading dashboard data.");

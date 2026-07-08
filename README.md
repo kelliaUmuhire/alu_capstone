@@ -4,9 +4,11 @@ This repository builds and serves a sector-level vulnerability assessment for
 Gasabo, Kicukiro, Musanze, and Nyarugenge. It combines Sentinel-2-derived
 features, census tables, and GADM level-3 administrative boundaries.
 
-The current target is a transparent census-informed proxy label. It is not an
-official Ubudehe category and must not be interpreted as a household poverty
-classification or a field-validated vulnerability measure.
+The models learn a transparent census-informed proxy label. The final sector
+priority is an ML-assisted hybrid index: 60% Random Forest out-of-fold score
+plus 40% census indicator score. The weights are explicit decision assumptions,
+not learned parameters. Results are not official Ubudehe categories, household
+poverty classifications, or field-validated vulnerability measures.
 
 ## Repository structure
 
@@ -57,7 +59,9 @@ jupyter notebook notebooks/sector_proxy_model_training.ipynb
 ```
 
 Both workflows use the x10 sector-subunit feature table, while evaluation and
-reporting preserve the 50 independent sector assessment units.
+reporting preserve the 50 independent sector assessment units. They also write
+`hybrid_weight_sensitivity.csv`, which compares the final ranks under 50/50,
+60/40, and 70/30 model/indicator weighting.
 
 ## Run the API
 

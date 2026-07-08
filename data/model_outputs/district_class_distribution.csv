@@ -1,5 +1,11 @@
-﻿district,Low,Medium,High
-Gasabo,7,6,2
-Kicukiro,8,2,0
-Musanze,0,4,11
-Nyarugenge,2,4,4
+﻿district,proxy_class,sector_subunit_row_count
+Gasabo,High,20
+Gasabo,Low,70
+Gasabo,Medium,60
+Kicukiro,Low,80
+Kicukiro,Medium,20
+Musanze,High,110
+Musanze,Medium,40
+Nyarugenge,High,40
+Nyarugenge,Low,20
+Nyarugenge,Medium,40

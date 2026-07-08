@@ -23,7 +23,31 @@
     "Sentinel observation-count fields",
     "Raw or repeated observation-level rows"
   ],
-  "evaluation": "leave_one_district_out",
+  "evaluation": "nested_leave_one_district_out",
+  "hyperparameter_tuning": "inner_leave_one_district_out_macro_f1",
+  "probability_calibration": "Sector-level temperature scaling is deployed only when nested OOF log loss improves.",
+  "final_assessment": {
+    "name": "transparent_hybrid_vulnerability_index",
+    "formula": "0.60 * random_forest_oof_score + 0.40 * census_indicator_score",
+    "model_weight": 0.6,
+    "indicator_weight": 0.4,
+    "class_threshold_method": "study_area_hybrid_score_tertiles",
+    "sensitivity_scenarios": {
+      "indicator_model_equal_50_50": [
+        0.5,
+        0.5
+      ],
+      "recommended_model_60_indicator_40": [
+        0.6,
+        0.4
+      ],
+      "model_emphasis_70_indicator_30": [
+        0.7,
+        0.3
+      ]
+    },
+    "important_dependency": "The Random Forest target is derived from the census indicator class, so the two hybrid components are related and must not be interpreted as independent evidence."
+  },
   "districts": [
     "Gasabo",
     "Kicukiro",
@@ -38,6 +62,7 @@
   "limitations": [
     "Only 50 independent sector labels are available.",
     "The target is a census-informed proxy, not an official Ubudehe category.",
+    "The hybrid weights are explicit decision weights, not parameters learned from independent outcomes.",
     "Performance estimates have high uncertainty and should be treated as pilot results."
   ]
 }

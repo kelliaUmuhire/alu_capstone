@@ -19,7 +19,10 @@
   "district_only_context": [
     "child_dependency_ratio",
     "older_dependency_ratio",
-    "total_age_dependency_ratio"
+    "total_age_dependency_ratio",
+    "district_age_share_0_14",
+    "district_age_share_15_64",
+    "district_age_share_65_plus"
   ],
   "analytics_only_not_scored": [
     "female_share",

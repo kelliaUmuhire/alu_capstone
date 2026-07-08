@@ -25,6 +25,7 @@ FEATURE_IMPORTANCE_PATH = MODEL_OUTPUTS_DIR / "feature_importance.csv"
 FEATURE_SUMMARY_PATH = MODEL_OUTPUTS_DIR / "feature_summary.csv"
 TRAINING_DATASET_PATH = MODEL_OUTPUTS_DIR / "training_dataset.csv"
 MODEL_METADATA_PATH = MODEL_OUTPUTS_DIR / "model_metadata.json"
+HYBRID_SENSITIVITY_PATH = MODEL_OUTPUTS_DIR / "hybrid_weight_sensitivity.csv"
 PROXY_LABELS_PATH = PROXY_DIR / "sector_vulnerability_proxy_labels.csv"
 GADM_L3_PATH = PROJECT_ROOT / "data" / "raw" / "gadm41_RWA_3.json"
 
@@ -71,11 +72,11 @@ class PredictionResponse(BaseModel):
 
 app = FastAPI(
     title="Rwanda Sector Vulnerability API",
-    version="0.2.0",
+    version="0.3.0",
     description=(
-        "FastAPI service for the sector-level vulnerability proxy dashboard. "
-        "The target is a census-informed proxy label, not an official Ubudehe "
-        "category or field-validated poverty estimate."
+        "FastAPI service for the sector-level ML-assisted hybrid vulnerability dashboard. "
+        "The final priority combines 60% Random Forest out-of-fold score with 40% census "
+        "indicator score. It is not an official Ubudehe category or field-validated poverty estimate."
     ),
 )
 
@@ -155,6 +156,9 @@ def load_assessments() -> pd.DataFrame:
         "older_dependency_ratio",
         "total_age_dependency_ratio",
         "age_table_granularity",
+        "district_age_share_0_14",
+        "district_age_share_15_64",
+        "district_age_share_65_plus",
         "component_density_pressure",
         "component_rurality_context",
         "component_district_age_dependency_context",
@@ -168,7 +172,7 @@ def load_assessments() -> pd.DataFrame:
             on="sector_id",
             validate="one_to_one",
         )
-    return frame.sort_values("proxy_rank").reset_index(drop=True)
+    return frame.sort_values("hybrid_priority_rank").reset_index(drop=True)
 
 
 @lru_cache
@@ -234,6 +238,7 @@ def load_model_bundle(model_name: str) -> dict[str, Any]:
 
 def filter_assessments(
     district: str | None,
+    hybrid_class: str | None,
     proxy_class: str | None,
     predicted_class: str | None,
     agreement: bool | None,
@@ -242,17 +247,23 @@ def filter_assessments(
     frame = load_assessments()
     if district:
         frame = frame[frame["district"].astype(str).str.casefold() == district.casefold()]
+    hybrid_class = normalize_class(hybrid_class)
+    if hybrid_class:
+        frame = frame[frame["hybrid_vulnerability_class"] == hybrid_class]
     proxy_class = normalize_class(proxy_class)
     if proxy_class:
         frame = frame[frame["proxy_class"] == proxy_class]
     predicted_class = normalize_class(predicted_class)
     if predicted_class:
-        frame = frame[frame["consensus_predicted_class"] == predicted_class]
+        frame = frame[frame["model_predicted_class"] == predicted_class]
     if agreement is not None:
-        frame = frame[frame["agreement_with_proxy_label"].astype(bool) == agreement]
+        frame = frame[frame["model_agrees_with_proxy_label"].astype(bool) == agreement]
     if search:
         needle = search.casefold()
-        searchable = ["sector_id", "sector_name", "district", "proxy_class", "consensus_predicted_class"]
+        searchable = [
+            "sector_id", "sector_name", "district", "hybrid_vulnerability_class", "proxy_class",
+            "model_predicted_class",
+        ]
         mask = pd.Series(False, index=frame.index)
         for column in searchable:
             mask = mask | frame[column].astype(str).str.casefold().str.contains(needle, regex=False)
@@ -262,9 +273,13 @@ def filter_assessments(
 
 def sort_frame(frame: pd.DataFrame, sort_by: str, order: Literal["asc", "desc"]) -> pd.DataFrame:
     allowed = {
+        "hybrid_priority_rank",
+        "hybrid_vulnerability_score",
+        "model_priority_rank",
+        "model_vulnerability_score",
+        "model_probability",
         "proxy_rank",
         "proxy_score",
-        "consensus_confidence",
         "sector_name",
         "district",
     }
@@ -278,20 +293,22 @@ def sector_summary() -> dict[str, Any]:
     labels = load_proxy_labels()
     performance = load_model_performance()
     best_model = performance.sort_values(["macro_f1", "balanced_accuracy"], ascending=False).head(1)
-    top = assessments.sort_values("proxy_rank").head(1)
+    top = assessments.sort_values("hybrid_priority_rank").head(1)
     return {
         "sector_count": int(assessments["sector_id"].nunique()),
         "district_count": int(assessments["district"].nunique()),
         "training_row_count": int(load_model_metadata().get("training_row_count", len(load_training_dataset()))),
         "independent_sector_count": int(load_model_metadata().get("independent_sector_count", assessments["sector_id"].nunique())),
-        "class_counts": class_counts(assessments),
-        "predicted_class_counts": class_counts(assessments, "consensus_predicted_class"),
-        "agreement_count": int(assessments["agreement_with_proxy_label"].astype(bool).sum()),
+        "class_counts": class_counts(assessments, "hybrid_vulnerability_class"),
+        "indicator_class_counts": class_counts(assessments),
+        "predicted_class_counts": class_counts(assessments, "model_predicted_class"),
+        "agreement_count": int(assessments["model_agrees_with_proxy_label"].astype(bool).sum()),
         "average_proxy_score": float(assessments["proxy_score"].mean()),
+        "average_hybrid_score": float(assessments["hybrid_vulnerability_score"].mean()),
         "top_priority_sector": records(top)[0] if not top.empty else None,
         "best_model": records(best_model)[0] if not best_model.empty else None,
         "population_total": int(labels["population_total"].sum()) if "population_total" in labels else None,
-        "caveat": "Proxy-label pilot. Do not interpret as validated Ubudehe prediction.",
+        "caveat": "ML-assisted hybrid prioritisation index; not an official Ubudehe or household-level assessment.",
     }
 
 
@@ -305,7 +322,7 @@ def root() -> dict[str, Any]:
         "dashboard": "/dashboard",
         "sectors": "/sectors",
         "sector_geojson": "/map/sectors.geojson",
-        "caveat": "Sector proxy labels only; not official Ubudehe categories.",
+        "caveat": "ML-assisted hybrid index only; not an official Ubudehe or household assessment.",
     }
 
 
@@ -318,6 +335,7 @@ def health() -> dict[str, Any]:
         "training_dataset": TRAINING_DATASET_PATH,
         "model_performance": MODEL_PERFORMANCE_PATH,
         "feature_importance": FEATURE_IMPORTANCE_PATH,
+        "hybrid_sensitivity": HYBRID_SENSITIVITY_PATH,
         "gadm_l3": GADM_L3_PATH,
         **{f"model_{name}": path for name, path in MODEL_PATHS.items()},
     }
@@ -337,7 +355,7 @@ def dashboard() -> dict[str, Any]:
         "summary": sector_summary(),
         "districts": districts(),
         "classes": CLASS_ORDER,
-        "rankings": records(assessments.sort_values("proxy_rank").head(15)),
+        "rankings": records(assessments.sort_values("hybrid_priority_rank").head(15)),
         "model_performance": records(load_model_performance()),
         "feature_importance": records(load_feature_importance().sort_values("importance", ascending=False).head(12)),
         "metadata": load_model_metadata(),
@@ -348,16 +366,17 @@ def dashboard() -> dict[str, Any]:
 @app.get("/api/sectors")
 def list_sectors(
     district: str | None = Query(None, description="Filter by district."),
+    hybrid_class: str | None = Query(None, description="Filter by final hybrid class: Low, Medium, or High."),
     proxy_class: str | None = Query(None, description="Filter by proxy class: Low, Medium, or High."),
-    predicted_class: str | None = Query(None, description="Filter by consensus predicted class."),
-    agreement: bool | None = Query(None, description="Filter by whether consensus prediction agrees with proxy label."),
+    predicted_class: str | None = Query(None, description="Filter by Random Forest predicted class."),
+    agreement: bool | None = Query(None, description="Filter by whether the Random Forest prediction agrees with the proxy label."),
     search: str | None = Query(None, description="Case-insensitive search across sector fields."),
-    sort_by: str = Query("proxy_rank", description="Sort field."),
+    sort_by: str = Query("hybrid_priority_rank", description="Sort field."),
     order: Literal["asc", "desc"] = Query("asc"),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ) -> dict[str, Any]:
-    frame = filter_assessments(district, proxy_class, predicted_class, agreement, search)
+    frame = filter_assessments(district, hybrid_class, proxy_class, predicted_class, agreement, search)
     frame = sort_frame(frame, sort_by, order)
     total = int(len(frame))
     page = frame.iloc[offset : offset + limit]
@@ -381,7 +400,7 @@ def get_sector(sector_id: str) -> dict[str, Any]:
 @app.get("/rankings/top")
 @app.get("/api/rankings/top")
 def top_ranked(limit: int = Query(10, ge=1, le=50)) -> list[dict[str, Any]]:
-    return records(load_assessments().sort_values("proxy_rank").head(limit))
+    return records(load_assessments().sort_values("hybrid_priority_rank").head(limit))
 
 
 @app.get("/districts")
@@ -496,14 +515,19 @@ def predict_sector(
     input_frame = input_frame.apply(pd.to_numeric, errors="coerce")
 
     estimator = bundle["model"]
-    predicted = np.asarray(estimator.predict(input_frame)).reshape(-1)[0]
-    predicted_label = CLASS_ORDER[int(predicted)] if str(predicted).isdigit() else str(predicted)
     probability_values = np.asarray(estimator.predict_proba(input_frame))[0]
     model_labels = list(getattr(estimator, "classes_", CLASS_ORDER))
     probabilities = {label: 0.0 for label in CLASS_ORDER}
     for label, probability in zip(model_labels, probability_values, strict=False):
         label_name = CLASS_ORDER[int(label)] if isinstance(label, (int, np.integer)) else str(label)
         probabilities[label_name] = float(probability)
+    ordered = np.asarray([probabilities[label] for label in CLASS_ORDER])
+    temperature = float(bundle.get("calibration_temperature", 1.0))
+    logits = np.log(np.clip(ordered, 1e-12, 1.0)) / temperature
+    calibrated = np.exp(logits - logits.max())
+    calibrated /= calibrated.sum()
+    probabilities = {label: float(calibrated[index]) for index, label in enumerate(CLASS_ORDER)}
+    predicted_label = CLASS_ORDER[int(calibrated.argmax())]
 
     return PredictionResponse(
         model=model,

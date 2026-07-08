@@ -31,6 +31,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from catboost import CatBoostClassifier
+from scipy.optimize import minimize_scalar
+from sklearn.base import clone
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
@@ -54,16 +56,99 @@ DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "model_outputs"
 DEFAULT_MODEL_DIR = PROJECT_ROOT / "models"
 RANDOM_STATE = 42
 CLASS_ORDER = ["Low", "Medium", "High"]
+PRIMARY_ASSESSMENT_MODEL = "random_forest"
+HYBRID_MODEL_WEIGHT = 0.60
+HYBRID_INDICATOR_WEIGHT = 0.40
+HYBRID_WEIGHT_SCENARIOS = {
+    "indicator_model_equal_50_50": (0.50, 0.50),
+    "recommended_model_60_indicator_40": (0.60, 0.40),
+    "model_emphasis_70_indicator_30": (0.70, 0.30),
+}
 
 # Mean captures each assessment unit's typical remotely sensed condition;
 # standard deviation captures spatial heterogeneity without making the feature
 # table unnecessarily wide.
 SENTINEL_VARIABLES = ("elevation", "ndvi", "ndbi", "mndwi", "slope")
 SENTINEL_STATS = ("mean", "std")
+TUNING_CANDIDATES = {
+    "random_forest": [
+        {"model__n_estimators": 250, "model__max_depth": 3, "model__min_samples_leaf": 2, "model__max_features": "sqrt"},
+        {"model__n_estimators": 300, "model__max_depth": 5, "model__min_samples_leaf": 1, "model__max_features": "sqrt"},
+        {"model__n_estimators": 300, "model__max_depth": 6, "model__min_samples_leaf": 2, "model__max_features": 0.8},
+        {"model__n_estimators": 300, "model__max_depth": None, "model__min_samples_leaf": 4, "model__max_features": 0.8},
+    ],
+    "catboost": [
+        {"model__iterations": 200, "model__depth": 3, "model__learning_rate": 0.03, "model__l2_leaf_reg": 5.0},
+        {"model__iterations": 250, "model__depth": 4, "model__learning_rate": 0.03, "model__l2_leaf_reg": 7.0},
+        {"model__iterations": 250, "model__depth": 5, "model__learning_rate": 0.03, "model__l2_leaf_reg": 7.0},
+        {"model__iterations": 200, "model__depth": 4, "model__learning_rate": 0.05, "model__l2_leaf_reg": 9.0},
+    ],
+}
 
 
 def write_csv(frame: pd.DataFrame, path: Path) -> None:
     frame.to_csv(path, index=False, encoding="utf-8-sig")
+
+
+def classify_score_tertiles(scores: pd.Series) -> tuple[pd.Series, dict[str, float]]:
+    """Classify a continuous study-area score using transparent tertile cutoffs."""
+    low_upper = float(scores.quantile(1 / 3))
+    medium_upper = float(scores.quantile(2 / 3))
+    classes = pd.Series(
+        np.select(
+            [scores.le(low_upper), scores.le(medium_upper)],
+            ["Low", "Medium"],
+            default="High",
+        ),
+        index=scores.index,
+        dtype="object",
+    )
+    return classes, {"low_upper": low_upper, "medium_upper": medium_upper}
+
+
+def add_hybrid_assessment_fields(assessments: pd.DataFrame) -> pd.DataFrame:
+    """Fuse RF and census-indicator scores into the documented final ranking."""
+    result = assessments.copy()
+    result["hybrid_model_weight"] = HYBRID_MODEL_WEIGHT
+    result["hybrid_indicator_weight"] = HYBRID_INDICATOR_WEIGHT
+    result["hybrid_model_contribution"] = result["model_vulnerability_score"] * HYBRID_MODEL_WEIGHT
+    result["hybrid_indicator_contribution"] = result["proxy_score"] * HYBRID_INDICATOR_WEIGHT
+    result["hybrid_vulnerability_score"] = (
+        result["hybrid_model_contribution"] + result["hybrid_indicator_contribution"]
+    )
+    result["hybrid_vulnerability_class"], thresholds = classify_score_tertiles(
+        result["hybrid_vulnerability_score"]
+    )
+    result["hybrid_priority_rank"] = (
+        result["hybrid_vulnerability_score"].rank(method="first", ascending=False).astype(int)
+    )
+    result["hybrid_class_threshold_method"] = "study_area_hybrid_score_tertiles"
+    result["hybrid_class_low_upper_score"] = thresholds["low_upper"]
+    result["hybrid_class_medium_upper_score"] = thresholds["medium_upper"]
+    return result
+
+
+def hybrid_sensitivity_analysis(assessments: pd.DataFrame) -> pd.DataFrame:
+    """Show whether sector priorities are stable under plausible fusion weights."""
+    scenarios: list[pd.DataFrame] = []
+    baseline_ranks = assessments.set_index("sector_id")["hybrid_priority_rank"]
+    for scenario, (model_weight, indicator_weight) in HYBRID_WEIGHT_SCENARIOS.items():
+        result = assessments[
+            ["sector_id", "sector_name", "district", "model_vulnerability_score", "proxy_score"]
+        ].copy()
+        result["scenario"] = scenario
+        result["model_weight"] = model_weight
+        result["indicator_weight"] = indicator_weight
+        result["hybrid_score"] = (
+            result["model_vulnerability_score"] * model_weight + result["proxy_score"] * indicator_weight
+        )
+        result["hybrid_class"], _ = classify_score_tertiles(result["hybrid_score"])
+        result["hybrid_rank"] = result["hybrid_score"].rank(method="first", ascending=False).astype(int)
+        result["baseline_60_40_rank"] = result["sector_id"].map(baseline_ranks).astype(int)
+        result["rank_change_from_60_40"] = result["baseline_60_40_rank"] - result["hybrid_rank"]
+        result["in_top_10"] = result["hybrid_rank"].le(10)
+        scenarios.append(result)
+    return pd.concat(scenarios, ignore_index=True).sort_values(["scenario", "hybrid_rank"])
 
 
 def parse_args() -> argparse.Namespace:
@@ -181,8 +266,20 @@ def make_models() -> dict[str, Pipeline]:
     }
 
 
-def metric_row(y_true: pd.Series, y_pred: np.ndarray, model_name: str, held_out_district: str) -> dict[str, Any]:
-    return {
+def ordered_log_loss(y_true: pd.Series, probabilities: np.ndarray) -> float:
+    indices = y_true.map({label: index for index, label in enumerate(CLASS_ORDER)}).to_numpy()
+    selected = probabilities[np.arange(len(probabilities)), indices]
+    return float(-np.log(np.clip(selected, 1e-12, 1.0)).mean())
+
+
+def metric_row(
+    y_true: pd.Series,
+    y_pred: np.ndarray,
+    model_name: str,
+    held_out_district: str,
+    probabilities: np.ndarray | None = None,
+) -> dict[str, Any]:
+    result = {
         "model": model_name,
         "held_out_district": held_out_district,
         "test_row_count": len(y_true),
@@ -192,6 +289,19 @@ def metric_row(y_true: pd.Series, y_pred: np.ndarray, model_name: str, held_out_
         "macro_precision": precision_score(y_true, y_pred, labels=CLASS_ORDER, average="macro", zero_division=0),
         "macro_recall": recall_score(y_true, y_pred, labels=CLASS_ORDER, average="macro", zero_division=0),
     }
+    if probabilities is not None:
+        encoded = pd.Categorical(y_true, categories=CLASS_ORDER).codes
+        one_hot = np.eye(len(CLASS_ORDER))[encoded]
+        confidence = probabilities.max(axis=1)
+        result.update(
+            {
+                "log_loss": ordered_log_loss(y_true, probabilities),
+                "multiclass_brier_score": float(np.mean(np.sum((probabilities - one_hot) ** 2, axis=1))),
+                "mean_confidence": float(confidence.mean()),
+                "confidence_accuracy_gap": float(confidence.mean() - result["accuracy"]),
+            }
+        )
+    return result
 
 
 def labels_for_model_classes(classes: Any) -> list[str]:
@@ -206,45 +316,238 @@ def labels_for_model_classes(classes: Any) -> list[str]:
     raise ValueError(f"Cannot map model class labels to proxy classes: {observed}")
 
 
+def model_probabilities(model: Pipeline, features: pd.DataFrame) -> np.ndarray:
+    """Return probabilities in the stable Low/Medium/High column order."""
+    observed = np.asarray(model.predict_proba(features))
+    labels = labels_for_model_classes(model.classes_)
+    ordered = np.zeros((len(features), len(CLASS_ORDER)), dtype=float)
+    for source_index, label in enumerate(labels):
+        ordered[:, CLASS_ORDER.index(label)] = observed[:, source_index]
+    return ordered
+
+
+def sector_probability_table(data: pd.DataFrame, probabilities: np.ndarray, prefix: str) -> pd.DataFrame:
+    """Average repeated subunit probabilities to one independent sector row."""
+    metadata = ["sector_id", "sector_name", "district", "proxy_class", "proxy_score", "proxy_rank"]
+    rows = data[metadata].reset_index(drop=True).copy()
+    for index, label in enumerate(CLASS_ORDER):
+        rows[f"{prefix}_{label.lower()}"] = probabilities[:, index]
+    return rows.groupby(metadata, as_index=False, dropna=False).mean(numeric_only=True)
+
+
+def inner_district_splits(data: pd.DataFrame) -> list[tuple[np.ndarray, np.ndarray]]:
+    """Keep both sectors and their subunits inside whole-district inner folds."""
+    if data["district"].nunique() < 2:
+        raise ValueError("At least two districts are required for group-aware inner validation.")
+    splitter = LeaveOneGroupOut()
+    return list(splitter.split(data, data["proxy_class"], groups=data["district"]))
+
+
+def tune_model(
+    model_name: str,
+    model: Pipeline,
+    data: pd.DataFrame,
+    selected: list[str],
+) -> tuple[dict[str, Any], pd.DataFrame]:
+    """Select parameters using inner sector-grouped predictions only."""
+    candidates = TUNING_CANDIDATES[model_name]
+    splits = inner_district_splits(data)
+    rows: list[dict[str, Any]] = []
+    for candidate_index, parameters in enumerate(candidates, start=1):
+        fold_scores: list[float] = []
+        for train_index, test_index in splits:
+            fitted = clone(model).set_params(**parameters).fit(
+                data.iloc[train_index][selected], data.iloc[train_index]["proxy_class"]
+            )
+            raw = model_probabilities(fitted, data.iloc[test_index][selected])
+            sectors = sector_probability_table(data.iloc[test_index], raw, "raw_probability")
+            raw_columns = [f"raw_probability_{label.lower()}" for label in CLASS_ORDER]
+            predicted = np.asarray(CLASS_ORDER)[sectors[raw_columns].to_numpy().argmax(axis=1)]
+            fold_scores.append(
+                f1_score(sectors["proxy_class"], predicted, labels=CLASS_ORDER, average="macro", zero_division=0)
+            )
+        rows.append(
+            {
+                "candidate_index": candidate_index,
+                "parameters_json": json.dumps(parameters, sort_keys=True),
+                "mean_inner_macro_f1": float(np.mean(fold_scores)),
+                "std_inner_macro_f1": float(np.std(fold_scores)),
+            }
+        )
+    results = pd.DataFrame(rows).sort_values(
+        ["mean_inner_macro_f1", "std_inner_macro_f1", "candidate_index"],
+        ascending=[False, True, True],
+    )
+    best = candidates[int(results.iloc[0]["candidate_index"]) - 1]
+    return best, results.reset_index(drop=True)
+
+
+def inner_oof_sector_probabilities(
+    model: Pipeline,
+    parameters: dict[str, Any],
+    data: pd.DataFrame,
+    selected: list[str],
+) -> pd.DataFrame:
+    parts: list[pd.DataFrame] = []
+    for train_index, test_index in inner_district_splits(data):
+        fitted = clone(model).set_params(**parameters).fit(
+            data.iloc[train_index][selected], data.iloc[train_index]["proxy_class"]
+        )
+        raw = model_probabilities(fitted, data.iloc[test_index][selected])
+        parts.append(sector_probability_table(data.iloc[test_index], raw, "raw_probability"))
+    return pd.concat(parts, ignore_index=True).sort_values("sector_id")
+
+
+def temperature_scale(probabilities: np.ndarray, temperature: float) -> np.ndarray:
+    """Apply multiclass temperature scaling without changing class ordering."""
+    logits = np.log(np.clip(probabilities, 1e-12, 1.0)) / temperature
+    logits -= logits.max(axis=1, keepdims=True)
+    scaled = np.exp(logits)
+    return scaled / scaled.sum(axis=1, keepdims=True)
+
+
+def fit_calibration_temperature(sector_predictions: pd.DataFrame) -> float:
+    columns = [f"raw_probability_{label.lower()}" for label in CLASS_ORDER]
+    probabilities = sector_predictions[columns].to_numpy()
+    labels = sector_predictions["proxy_class"]
+
+    def objective(value: float) -> float:
+        return ordered_log_loss(labels, temperature_scale(probabilities, value))
+
+    result = minimize_scalar(objective, bounds=(0.35, 5.0), method="bounded")
+    if not result.success:
+        raise ValueError(f"Probability calibration failed: {result.message}")
+    return float(result.x)
+
+
+def fit_tuned_calibrated_model(
+    model_name: str,
+    model: Pipeline,
+    data: pd.DataFrame,
+    selected: list[str],
+) -> tuple[Pipeline, dict[str, Any], float, pd.DataFrame]:
+    best_parameters, tuning = tune_model(model_name, model, data, selected)
+    calibration_predictions = inner_oof_sector_probabilities(model, best_parameters, data, selected)
+    temperature = fit_calibration_temperature(calibration_predictions)
+    fitted = clone(model).set_params(**best_parameters).fit(data[selected], data["proxy_class"])
+    return fitted, best_parameters, temperature, tuning
+
+
 def evaluate_model(
     model_name: str,
     model: Pipeline,
     data: pd.DataFrame,
     selected: list[str],
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    X = data[selected]
-    y = data["proxy_class"]
-    groups = data["district"]
+    X, y, groups = data[selected], data["proxy_class"], data["district"]
     splitter = LeaveOneGroupOut()
     predictions: list[pd.DataFrame] = []
     fold_metrics: list[dict[str, Any]] = []
     for train_index, test_index in splitter.split(X, y, groups):
-        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+        train, test = data.iloc[train_index].copy(), data.iloc[test_index].copy()
         held_out_district = str(groups.iloc[test_index].iloc[0])
-        fitted = model.fit(X_train, y_train)
-        model_labels = labels_for_model_classes(fitted.classes_)
-        predicted = np.asarray(fitted.predict(X_test)).reshape(-1)
-        if set(predicted).issubset(set(range(len(CLASS_ORDER)))):
-            predicted = np.asarray([CLASS_ORDER[int(value)] for value in predicted])
-        probabilities = fitted.predict_proba(X_test)
-        probability_frame = pd.DataFrame(0.0, index=test_index, columns=CLASS_ORDER)
-        probability_frame.loc[:, model_labels] = probabilities
-        fold = data.iloc[test_index][model_metadata_columns(data)].copy()
+        best_parameters, tuning = tune_model(model_name, model, train, selected)
+        calibration_predictions = inner_oof_sector_probabilities(model, best_parameters, train, selected)
+        temperature = fit_calibration_temperature(calibration_predictions)
+        fitted = clone(model).set_params(**best_parameters).fit(train[selected], train["proxy_class"])
+
+        raw_rows = model_probabilities(fitted, test[selected])
+        fold = sector_probability_table(test, raw_rows, "raw_probability")
+        raw_columns = [f"raw_probability_{label.lower()}" for label in CLASS_ORDER]
+        raw_sector_probabilities = fold[raw_columns].to_numpy()
+        calibrated = temperature_scale(raw_sector_probabilities, temperature)
+        predicted = np.asarray(CLASS_ORDER)[calibrated.argmax(axis=1)]
         fold["model"] = model_name
         fold["predicted_proxy_class"] = predicted
         fold["held_out_district"] = held_out_district
-        for label in CLASS_ORDER:
-            fold[f"probability_{label.lower()}"] = probability_frame.loc[test_index, label].to_numpy()
-        fold["prediction_confidence"] = probability_frame.max(axis=1).to_numpy()
+        fold["calibration_temperature"] = temperature
+        fold["raw_prediction_confidence"] = raw_sector_probabilities.max(axis=1)
+        for class_index, label in enumerate(CLASS_ORDER):
+            fold[f"probability_{label.lower()}"] = calibrated[:, class_index]
+        fold["prediction_confidence"] = calibrated.max(axis=1)
         predictions.append(fold)
-        fold_metrics.append(metric_row(y_test, predicted, model_name, held_out_district))
+
+        calibrated_metrics = metric_row(
+            fold["proxy_class"], predicted, model_name, held_out_district, calibrated
+        )
+        raw_predicted = np.asarray(CLASS_ORDER)[raw_sector_probabilities.argmax(axis=1)]
+        raw_metrics = metric_row(
+            fold["proxy_class"], raw_predicted, model_name, held_out_district, raw_sector_probabilities
+        )
+        calibrated_metrics.update(
+            {
+                "training_sector_count": int(train["sector_id"].nunique()),
+                "best_parameters_json": json.dumps(best_parameters, sort_keys=True),
+                "best_inner_macro_f1": float(tuning.iloc[0]["mean_inner_macro_f1"]),
+                "calibration_temperature": temperature,
+                **{
+                    f"raw_{key}": value
+                    for key, value in raw_metrics.items()
+                    if key not in {"model", "held_out_district", "test_row_count"}
+                },
+            }
+        )
+        fold_metrics.append(calibrated_metrics)
+
     oof = pd.concat(predictions, ignore_index=True).sort_values(["district", "sector_id"])
     folds = pd.DataFrame(fold_metrics)
-    overall = pd.DataFrame(
-        [metric_row(oof["proxy_class"], oof["predicted_proxy_class"].to_numpy(), model_name, "all_oof")]
+    probability_columns = [f"probability_{label.lower()}" for label in CLASS_ORDER]
+    raw_columns = [f"raw_probability_{label.lower()}" for label in CLASS_ORDER]
+    candidate_probabilities = oof[probability_columns].to_numpy()
+    candidate_metrics = metric_row(
+        oof["proxy_class"],
+        oof["predicted_proxy_class"].to_numpy(),
+        model_name,
+        "all_oof",
+        candidate_probabilities,
     )
-    return oof, folds, overall
+    raw_predicted = np.asarray(CLASS_ORDER)[oof[raw_columns].to_numpy().argmax(axis=1)]
+    raw_metrics = metric_row(
+        oof["proxy_class"], raw_predicted, model_name, "all_oof", oof[raw_columns].to_numpy()
+    )
+    calibration_selected = candidate_metrics["log_loss"] < raw_metrics["log_loss"]
+    for label in CLASS_ORDER:
+        calibrated_column = f"probability_{label.lower()}"
+        oof[f"candidate_calibrated_{calibrated_column}"] = oof[calibrated_column]
+        if not calibration_selected:
+            oof[calibrated_column] = oof[f"raw_{calibrated_column}"]
+    selected_probabilities = oof[probability_columns].to_numpy()
+    oof["predicted_proxy_class"] = np.asarray(CLASS_ORDER)[selected_probabilities.argmax(axis=1)]
+    oof["prediction_confidence"] = selected_probabilities.max(axis=1)
+    oof["calibration_selected"] = calibration_selected
+    overall_row = metric_row(
+        oof["proxy_class"],
+        oof["predicted_proxy_class"].to_numpy(),
+        model_name,
+        "all_oof",
+        selected_probabilities,
+    )
+    overall_row.update(
+        {
+            f"raw_{key}": value
+            for key, value in raw_metrics.items()
+            if key not in {"model", "held_out_district", "test_row_count"}
+        }
+    )
+    overall_row.update(
+        {
+            f"candidate_calibrated_{key}": value
+            for key, value in candidate_metrics.items()
+            if key not in {"model", "held_out_district", "test_row_count"}
+        }
+    )
+    overall_row["calibration_selected"] = calibration_selected
+
+    metric_names = [
+        "accuracy", "balanced_accuracy", "macro_f1", "macro_precision", "macro_recall",
+        "log_loss", "multiclass_brier_score", "mean_confidence", "confidence_accuracy_gap",
+    ]
+    for metric in metric_names:
+        folds[f"candidate_calibrated_{metric}"] = folds[metric]
+        if not calibration_selected:
+            folds[metric] = folds[f"raw_{metric}"]
+    folds["calibration_selected"] = calibration_selected
+    return oof, folds, pd.DataFrame([overall_row])
 
 
 def feature_importance(model_name: str, model: Pipeline, selected: list[str]) -> pd.DataFrame:
@@ -339,11 +642,19 @@ def main() -> int:
     all_folds: list[pd.DataFrame] = []
     all_performance: list[pd.DataFrame] = []
     all_importance: list[pd.DataFrame] = []
+    all_tuning: list[pd.DataFrame] = []
     reports: list[pd.DataFrame] = []
     for model_name, model in models.items():
         logging.info("Evaluating %s with leave-one-district-out validation", model_name)
         oof, fold_metrics, overall = evaluate_model(model_name, model, data, selected)
-        fitted_full = model.fit(data[selected], data["proxy_class"])
+        fitted_full, best_parameters, temperature, tuning = fit_tuned_calibrated_model(
+            model_name, model, data, selected
+        )
+        calibration_selected = bool(overall.iloc[0]["calibration_selected"])
+        applied_temperature = temperature if calibration_selected else 1.0
+        tuning.insert(0, "model", model_name)
+        tuning.insert(1, "training_scope", "all_sectors")
+        tuning["selected"] = tuning["parameters_json"].eq(json.dumps(best_parameters, sort_keys=True))
         importance = feature_importance(model_name, fitted_full, selected)
         report = pd.DataFrame(classification_report(
             oof["proxy_class"], oof["predicted_proxy_class"], labels=CLASS_ORDER, output_dict=True, zero_division=0
@@ -353,11 +664,18 @@ def main() -> int:
             {
                 "model": fitted_full,
                 "feature_columns": selected,
+                "best_parameters": best_parameters,
+                "calibration_method": (
+                    "sector_level_temperature_scaling" if calibration_selected else "identity_calibration"
+                ),
+                "calibration_selected": calibration_selected,
+                "calibration_candidate_temperature": temperature,
+                "calibration_temperature": applied_temperature,
                 "target": "proxy_class",
                 "training_unit": unit,
                 "training_row_count": len(data),
                 "independent_sector_count": int(data["sector_id"].nunique()),
-                "evaluation": "leave_one_district_out",
+                "evaluation": "nested_leave_one_district_out",
                 "caveat": "Proxy-label pilot. Do not interpret as validated Ubudehe prediction.",
             },
             model_dir / f"sector_proxy_{model_name}.joblib",
@@ -366,6 +684,7 @@ def main() -> int:
         all_folds.append(fold_metrics)
         all_performance.append(overall)
         all_importance.append(importance)
+        all_tuning.append(tuning)
         reports.append(report)
         plot_confusion(model_name, oof, output_dir)
         plot_feature_importance(importance, model_name, output_dir)
@@ -374,23 +693,38 @@ def main() -> int:
     folds_all = pd.concat(all_folds, ignore_index=True)
     performance = pd.concat(all_performance, ignore_index=True)
     importance_all = pd.concat(all_importance, ignore_index=True)
+    tuning_all = pd.concat(all_tuning, ignore_index=True)
     reports_all = pd.concat(reports, ignore_index=True)
     write_csv(oof_all, output_dir / "out_of_fold_predictions.csv")
     write_csv(folds_all, output_dir / "district_fold_performance.csv")
     write_csv(performance, output_dir / "model_performance.csv")
     write_csv(importance_all, output_dir / "feature_importance.csv")
+    write_csv(tuning_all, output_dir / "hyperparameter_tuning.csv")
     write_csv(reports_all, output_dir / "classification_report.csv")
     plot_performance(performance, output_dir)
 
     probability_columns = [f"probability_{label.lower()}" for label in CLASS_ORDER]
-    consensus = (
-        oof_all.groupby(["sector_id", "sector_name", "district", "proxy_class", "proxy_score", "proxy_rank"], as_index=False)[probability_columns]
-        .mean()
+    assessment_columns = [
+        "sector_id", "sector_name", "district", "proxy_class", "proxy_score", "proxy_rank", *probability_columns
+    ]
+    assessments = oof_all.loc[oof_all["model"].eq(PRIMARY_ASSESSMENT_MODEL), assessment_columns].copy()
+    if assessments["sector_id"].duplicated().any() or assessments["sector_id"].nunique() != data["sector_id"].nunique():
+        raise ValueError("Primary-model assessments must contain exactly one row per sector.")
+    assessments.insert(6, "primary_model", PRIMARY_ASSESSMENT_MODEL)
+    assessments["model_predicted_class"] = (
+        assessments[probability_columns].idxmax(axis=1).str.replace("probability_", "").str.title()
     )
-    consensus["consensus_predicted_class"] = consensus[probability_columns].idxmax(axis=1).str.replace("probability_", "").str.title()
-    consensus["consensus_confidence"] = consensus[probability_columns].max(axis=1)
-    consensus["agreement_with_proxy_label"] = consensus["consensus_predicted_class"].eq(consensus["proxy_class"])
-    write_csv(consensus.sort_values("proxy_rank"), output_dir / "sector_model_assessments.csv")
+    assessments["model_probability"] = assessments[probability_columns].max(axis=1)
+    assessments["model_vulnerability_score"] = (
+        assessments["probability_high"] + 0.5 * assessments["probability_medium"]
+    )
+    assessments["model_priority_rank"] = (
+        assessments["model_vulnerability_score"].rank(method="first", ascending=False).astype(int)
+    )
+    assessments["model_agrees_with_proxy_label"] = assessments["model_predicted_class"].eq(assessments["proxy_class"])
+    assessments = add_hybrid_assessment_fields(assessments)
+    write_csv(assessments.sort_values("hybrid_priority_rank"), output_dir / "sector_model_assessments.csv")
+    write_csv(hybrid_sensitivity_analysis(assessments), output_dir / "hybrid_weight_sensitivity.csv")
 
     metadata = {
         "training_unit": unit,
@@ -406,12 +740,29 @@ def main() -> int:
             "Sentinel observation-count fields",
             "Raw or repeated observation-level rows",
         ],
-        "evaluation": "leave_one_district_out",
+        "evaluation": "nested_leave_one_district_out",
+        "hyperparameter_tuning": "inner_leave_one_district_out_macro_f1",
+        "probability_calibration": (
+            "Sector-level temperature scaling is deployed only when nested OOF log loss improves."
+        ),
+        "final_assessment": {
+            "name": "transparent_hybrid_vulnerability_index",
+            "formula": "0.60 * random_forest_oof_score + 0.40 * census_indicator_score",
+            "model_weight": HYBRID_MODEL_WEIGHT,
+            "indicator_weight": HYBRID_INDICATOR_WEIGHT,
+            "class_threshold_method": "study_area_hybrid_score_tertiles",
+            "sensitivity_scenarios": HYBRID_WEIGHT_SCENARIOS,
+            "important_dependency": (
+                "The Random Forest target is derived from the census indicator class, so the two hybrid components "
+                "are related and must not be interpreted as independent evidence."
+            ),
+        },
         "districts": sorted(data["district"].unique().tolist()),
         "class_counts": data["proxy_class"].value_counts().reindex(CLASS_ORDER).to_dict(),
         "limitations": [
             "Only 50 independent sector labels are available.",
             "The target is a census-informed proxy, not an official Ubudehe category.",
+            "The hybrid weights are explicit decision weights, not parameters learned from independent outcomes.",
             "Performance estimates have high uncertainty and should be treated as pilot results.",
         ],
     }

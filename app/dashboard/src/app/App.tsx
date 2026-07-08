@@ -65,9 +65,19 @@ type SectorAssessment = {
   probability_low: number;
   probability_medium: number;
   probability_high: number;
-  consensus_predicted_class: string;
-  consensus_confidence: number;
-  agreement_with_proxy_label: boolean;
+  primary_model: string;
+  model_predicted_class: string;
+  model_probability: number;
+  model_vulnerability_score: number;
+  model_priority_rank: number;
+  model_agrees_with_proxy_label: boolean;
+  hybrid_model_weight: number;
+  hybrid_indicator_weight: number;
+  hybrid_model_contribution: number;
+  hybrid_indicator_contribution: number;
+  hybrid_vulnerability_score: number;
+  hybrid_vulnerability_class: string;
+  hybrid_priority_rank: number;
   population_total?: number | null;
   population_urban?: number | null;
   population_rural?: number | null;
@@ -76,12 +86,10 @@ type SectorAssessment = {
   population_density_per_km2?: number | null;
   population_male?: number | null;
   population_female?: number | null;
-  female_share?: number | null;
-  sex_ratio_male_per_100_female?: number | null;
-  child_dependency_ratio?: number | null;
-  older_dependency_ratio?: number | null;
   total_age_dependency_ratio?: number | null;
-  age_table_granularity?: string | null;
+  district_age_share_0_14?: number | null;
+  district_age_share_15_64?: number | null;
+  district_age_share_65_plus?: number | null;
   component_density_pressure?: number | null;
   component_rurality_context?: number | null;
   component_district_age_dependency_context?: number | null;
@@ -94,9 +102,11 @@ type DashboardSummary = {
   training_row_count: number;
   independent_sector_count: number;
   class_counts: Record<string, number>;
+  indicator_class_counts: Record<string, number>;
   predicted_class_counts: Record<string, number>;
   agreement_count: number;
   average_proxy_score: number;
+  average_hybrid_score: number;
   population_total: number | null;
   best_model?: {
     model: string;
@@ -277,9 +287,14 @@ function formatNumber(value: number | null | undefined, digits = 0) {
   });
 }
 
-function formatScore(value: number | null | undefined) {
+function formatScoreOutOf100(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(value)) return "n/a";
-  return value.toFixed(3);
+  return `${(value * 100).toFixed(1)} / 100`;
+}
+
+function formatContribution(value: number | null | undefined, weight: number) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "n/a";
+  return `${(value * weight * 100).toFixed(1)} / 100`;
 }
 
 function apiErrorMessage(error: unknown) {
@@ -384,16 +399,16 @@ export default function App() {
   const filteredRankings = useMemo(() => {
     return sectorRows
       .filter((sector) => selDistrict === "All Districts" || sector.district === selDistrict)
-      .filter((sector) => selRisk === "All Levels" || sector.proxy_class === selRisk)
+      .filter((sector) => selRisk === "All Levels" || sector.hybrid_vulnerability_class === selRisk)
       .filter((sector) => !selSectorId || sector.sector_id === selSectorId)
-      .sort((a, b) => a.proxy_rank - b.proxy_rank);
+      .sort((a, b) => a.hybrid_priority_rank - b.hybrid_priority_rank);
   }, [sectorRows, selDistrict, selRisk, selSectorId]);
 
   const filteredMapFeatures = useMemo(() => {
     return mapFeatures.filter((feature) => {
       const assessment = feature.assessment;
       const okDistrict = selDistrict === "All Districts" || feature.district === selDistrict;
-      const okRisk = selRisk === "All Levels" || assessment?.proxy_class === selRisk;
+      const okRisk = selRisk === "All Levels" || assessment?.hybrid_vulnerability_class === selRisk;
       return okDistrict && okRisk;
     });
   }, [mapFeatures, selDistrict, selRisk]);
@@ -427,15 +442,12 @@ export default function App() {
             <Shield className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="min-w-0">
-            <div className="text-[9px] font-mono text-cyan-500/60 tracking-[0.18em] uppercase leading-none mb-0.5">
-              Rwanda vulnerability model
-            </div>
-            <h1 className="text-sm font-bold text-white tracking-wider leading-tight truncate">
-              Sector Vulnerability Intelligence System
+            <h1 className="text-base font-bold text-white tracking-wider leading-tight truncate">
+              Rwanda Informal Settlement Vulnerability Dashboard
             </h1>
           </div>
           <div className="w-px h-8 bg-border shrink-0 mx-1" />
-          <div
+          {/* <div
             className={`flex items-center gap-1.5 px-2 py-1 border rounded shrink-0 ${
               apiError ? "bg-red-500/10 border-red-500/25" : "bg-emerald-500/10 border-emerald-500/25"
             }`}
@@ -444,26 +456,41 @@ export default function App() {
             <span className={`text-[10px] font-mono tracking-widest ${apiError ? "text-red-400" : "text-emerald-400"}`}>
               {apiError ? "API FALLBACK" : loading ? "SYNC" : "LIVE API"}
             </span>
+          </div> */}
+          <div
+            className="flex items-center gap-1.5 px-2 py-1 border rounded shrink-0 bg-emerald-500/10 border-emerald-500/25"
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-400" />
+            <span className="text-[10px] font-mono tracking-widest text-emerald-400">
+             SECTOR
+            </span>
           </div>
         </div>
         <div
           className="flex items-center gap-5 text-[10px] text-muted-foreground shrink-0"
           style={{ fontFamily: "'JetBrains Mono',monospace" }}
         >
-          <span className="flex items-center gap-1.5">
-            <Clock className="w-3 h-3 shrink-0" />
-            Updated:
-            <span className="text-cyan-300 ml-1">sector model outputs</span>
-          </span>
-          <span className="flex items-center gap-1.5">
+          {/* <span className="flex items-center gap-1.5">
             <Radio className="w-3 h-3 shrink-0" />
             Unit:
             <span className="text-cyan-300 ml-1">official sectors</span>
-          </span>
+          </span> */}
           <span className="flex items-center gap-1.5">
             <Activity className="w-3 h-3 shrink-0" />
             API:
-            <span className="text-cyan-300 ml-1">/api/dashboard</span>
+            <a
+              href="http://127.0.0.1:8000/docs"
+              target="_blank"
+              rel="noreferrer"
+              className="text-cyan-300 ml-1 hover:text-cyan-200 underline underline-offset-2"
+            >
+              Swagger documentation
+            </a>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Clock className="w-3 h-3 shrink-0" />
+            Version:
+            <span className="text-cyan-300 ml-1">1.0.1</span>
           </span>
         </div>
       </header>
@@ -490,7 +517,7 @@ export default function App() {
 
           <div>
             <p className="text-[10px] font-mono text-muted-foreground/70 tracking-[0.14em] uppercase mb-1.5">
-              Vulnerability Class
+              Estimated Vulnerability Level
             </p>
             <div className="space-y-0.5">
               {RISK_LEVELS.map((risk) => {
@@ -575,7 +602,7 @@ export default function App() {
               </button>
               {sectorsForFilter.map((sector) => {
                 const active = selSectorId === sector.sector_id;
-                const style = riskStyle(sector.proxy_class);
+                const style = riskStyle(sector.hybrid_vulnerability_class);
                 return (
                   <button
                     key={sector.sector_id}
@@ -593,7 +620,7 @@ export default function App() {
           </div>
 
           <div>
-            <p className="text-[10px] font-mono text-muted-foreground/70 tracking-[0.14em] uppercase mb-2">Class Legend</p>
+            <p className="text-[10px] font-mono text-muted-foreground/70 tracking-[0.14em] uppercase mb-2">Vulnerability Level Legend</p>
             <div className="space-y-1.5">
               {CLASS_ORDER.slice().reverse().map((label) => {
                 const style = riskStyle(label);
@@ -757,7 +784,7 @@ export default function App() {
 
                 {filteredMapFeatures.map((sector) => {
                   const assessment = sector.assessment;
-                  const style = riskStyle(assessment?.proxy_class ?? "Unknown");
+                  const style = riskStyle(assessment?.hybrid_vulnerability_class ?? "Unknown");
                   const isSelected = selSectorId === sector.id;
                   const isHovered = hovSectorId === sector.id;
                   const dimmed = selSectorId && !isSelected;
@@ -781,7 +808,7 @@ export default function App() {
                       >
                         <title>
                           {assessment
-                            ? `${assessment.sector_name} · ${assessment.district} · ${assessment.proxy_class} · rank ${assessment.proxy_rank}`
+                            ? `${assessment.sector_name} · ${assessment.district} · hybrid ${assessment.hybrid_vulnerability_class} · rank ${assessment.hybrid_priority_rank}`
                             : `${sector.name} · ${sector.district}`}
                         </title>
                       </path>
@@ -791,7 +818,7 @@ export default function App() {
 
                 <g aria-label="High risk pulse indicators" className="pointer-events-none">
                   {filteredMapFeatures
-                    .filter((sector) => sector.assessment?.proxy_class === "High")
+                    .filter((sector) => sector.assessment?.hybrid_vulnerability_class === "High")
                     .map((sector) => (
                       <g key={`pulse-${sector.id}`}>
                         <circle
@@ -831,7 +858,7 @@ export default function App() {
                     <path
                       d={activeMapFeature.path}
                       fill="none"
-                      stroke={riskStyle(activeSector.proxy_class).stroke}
+                      stroke={riskStyle(activeSector.hybrid_vulnerability_class).stroke}
                       strokeWidth={2}
                       strokeLinejoin="round"
                       vectorEffect="non-scaling-stroke"
@@ -840,7 +867,7 @@ export default function App() {
                       cx={activeMapFeature.center[0]}
                       cy={activeMapFeature.center[1]}
                       r="2.3"
-                      fill={riskStyle(activeSector.proxy_class).stroke}
+                      fill={riskStyle(activeSector.hybrid_vulnerability_class).stroke}
                       opacity="0.95"
                     />
                   </g>
@@ -869,29 +896,37 @@ export default function App() {
                         <div className="text-sm font-bold text-white tracking-wide truncate">{activeSector.sector_name}</div>
                       </div>
                       <div
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${riskStyle(activeSector.proxy_class).bg} ${
-                          riskStyle(activeSector.proxy_class).text
-                        } border ${riskStyle(activeSector.proxy_class).border}`}
+                        className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold whitespace-nowrap ${riskStyle(activeSector.hybrid_vulnerability_class).bg} ${
+                          riskStyle(activeSector.hybrid_vulnerability_class).text
+                        } border ${riskStyle(activeSector.hybrid_vulnerability_class).border}`}
                       >
-                        {activeSector.proxy_class.toUpperCase()}
+                        {activeSector.hybrid_vulnerability_class.toUpperCase()} FINAL VULNERABILITY LEVEL
                       </div>
                     </div>
                     <div className="grid grid-cols-4 gap-3 mb-2">
                       {[
-                        { label: "Proxy Score", value: formatScore(activeSector.proxy_score), color: riskStyle(activeSector.proxy_class).text },
-                        { label: "Rank", value: `#${activeSector.proxy_rank}`, color: "text-white" },
-                        { label: "Model Class", value: activeSector.consensus_predicted_class, color: riskStyle(activeSector.consensus_predicted_class).text },
-                        { label: "Confidence", value: formatPercent(activeSector.consensus_confidence), color: "text-cyan-400" },
+                        { label: "Hybrid Vulnerability Score", value: formatScoreOutOf100(activeSector.hybrid_vulnerability_score), color: riskStyle(activeSector.hybrid_vulnerability_class).text, size: "text-lg" },
+                        { label: "Final Priority Rank", value: `#${activeSector.hybrid_priority_rank}`, color: "text-white", size: "text-lg" },
+                        { label: "Vulnerability Level", value: activeSector.hybrid_vulnerability_class, color: riskStyle(activeSector.hybrid_vulnerability_class).text, size: "text-base" },
+                        { label: "RF Confidence", value: formatPercent(activeSector.model_probability), color: "text-cyan-400", size: "text-lg" },
                       ].map((item) => (
                         <div key={item.label}>
                           <div className="text-[8px] font-mono text-muted-foreground/60 uppercase tracking-widest mb-0.5">
                             {item.label}
                           </div>
-                          <div className={`text-lg font-bold font-mono leading-tight ${item.color}`}>{item.value}</div>
+                          <div className={`${item.size} font-bold font-mono leading-tight ${item.color}`}>{item.value}</div>
                         </div>
                       ))}
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-[9px] font-mono text-muted-foreground/70">
+                    {/* <div className="flex items-center gap-3 text-[9px] font-mono text-muted-foreground/70">
+                      <span className="text-muted-foreground/45 uppercase tracking-wider">Final score</span>
+                      <span>60% RF {formatScoreOutOf100(activeSector.model_vulnerability_score)}</span>
+                      <span>+</span>
+                      <span>40% indicator {formatScoreOutOf100(activeSector.proxy_score)}</span>
+                      <span className="text-cyan-300">= {formatScoreOutOf100(activeSector.hybrid_vulnerability_score)}</span>
+                    </div> */}
+                    <div className="flex items-center gap-4 mt-1 text-[9px] font-mono text-muted-foreground/60">
+                      {/* <span className="text-muted-foreground/40 uppercase tracking-wider">RF probabilities · score = High + ½ Medium</span> */}
                       <span>Low {formatPercent(activeSector.probability_low, 0)}</span>
                       <span>Medium {formatPercent(activeSector.probability_medium, 0)}</span>
                       <span>High {formatPercent(activeSector.probability_high, 0)}</span>
@@ -900,19 +935,33 @@ export default function App() {
                     <div className="mt-3 pt-3 border-t border-border">
                       <div className="flex items-center justify-between gap-3 mb-2">
                         <div className="text-[9px] font-mono text-cyan-500/60 tracking-[0.18em] uppercase">
-                          Census and proxy context
+                          Hybrid assessment components
                         </div>
                         <div className="text-[8px] font-mono text-muted-foreground/45 uppercase tracking-wider">
-                          {activeSector.age_table_granularity ?? "sector census inputs"}
+                          Transparent 60 / 40 fusion
                         </div>
                       </div>
 
                       <div className="grid grid-cols-4 gap-2 mb-3">
                         {[
+                          { label: "RF Estimate", value: activeSector.model_predicted_class, tone: riskStyle(activeSector.model_predicted_class).text },
+                          { label: "RF Contribution", value: formatScoreOutOf100(activeSector.hybrid_model_contribution), tone: "text-cyan-300" },
+                          { label: "Indicator Level", value: activeSector.proxy_class, tone: riskStyle(activeSector.proxy_class).text },
+                          { label: "Indicator Contribution", value: formatScoreOutOf100(activeSector.hybrid_indicator_contribution), tone: "text-cyan-300" },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded border border-border bg-secondary/30 px-3 py-2 min-w-0">
+                            <div className="text-[8px] font-mono text-muted-foreground/55 uppercase tracking-widest">{item.label}</div>
+                            <div className={`text-sm font-bold font-mono ${item.tone}`}>{item.value}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2 mb-3">
+                        {[
                           { label: "Population", value: formatNumber(activeSector.population_total), tone: "text-white" },
-                          { label: "Density / km2", value: formatNumber(activeSector.population_density_per_km2, 0), tone: "text-cyan-300" },
-                          { label: "Urban", value: formatPercent(activeSector.urban_share, 0), tone: "text-sky-300" },
-                          { label: "Rural", value: formatPercent(activeSector.rural_share, 0), tone: "text-emerald-300" },
+                          { label: "Density (people/km²)", value: formatNumber(activeSector.population_density_per_km2, 0), tone: "text-cyan-300" },
+                          { label: "Urban", value: `${formatNumber(activeSector.population_urban)} (${formatPercent(activeSector.urban_share, 0)})`, tone: "text-sky-300" },
+                          { label: "Rural", value: `${formatNumber(activeSector.population_rural)} (${formatPercent(activeSector.rural_share, 0)})`, tone: "text-emerald-300" },
                         ].map((item) => (
                           <div key={item.label} className="rounded border border-border bg-secondary/40 px-2 py-1.5 min-w-0">
                             <div className="text-[8px] font-mono text-muted-foreground/55 uppercase tracking-widest truncate">
@@ -923,54 +972,70 @@ export default function App() {
                         ))}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div className="rounded border border-border bg-secondary/30 px-3 py-2">
-                          <div className="flex justify-between text-[9px] font-mono text-muted-foreground/65 mb-1">
-                            <span>Urban population</span>
-                            <span>{formatNumber(activeSector.population_urban)}</span>
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        {[
+                          { label: "Male population", value: formatNumber(activeSector.population_male) },
+                          { label: "Female population", value: formatNumber(activeSector.population_female) },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded border border-border bg-secondary/30 px-3 py-2">
+                            <div className="text-[8px] font-mono text-muted-foreground/55 uppercase tracking-widest">{item.label}</div>
+                            <div className="text-sm font-bold font-mono text-white">{item.value}</div>
                           </div>
-                          <div className="h-1.5 rounded-full bg-background overflow-hidden mb-2">
-                            <div className="h-full rounded-full bg-sky-400" style={{ width: `${Math.min(100, (activeSector.urban_share ?? 0) * 100)}%` }} />
-                          </div>
-                          <div className="flex justify-between text-[9px] font-mono text-muted-foreground/65 mb-1">
-                            <span>Rural population</span>
-                            <span>{formatNumber(activeSector.population_rural)}</span>
-                          </div>
-                          <div className="h-1.5 rounded-full bg-background overflow-hidden">
-                            <div className="h-full rounded-full bg-emerald-400" style={{ width: `${Math.min(100, (activeSector.rural_share ?? 0) * 100)}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="rounded border border-border bg-secondary/30 px-3 py-2">
-                          <div className="grid grid-cols-2 gap-2 mb-2">
-                            <div>
-                              <div className="text-[8px] font-mono text-muted-foreground/55 uppercase tracking-widest">Male</div>
-                              <div className="text-sm font-bold font-mono text-white">{formatNumber(activeSector.population_male)}</div>
+                        ))}
+                        <div className="rounded border border-border bg-secondary/30 px-3 py-2 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-[8px] font-mono text-muted-foreground/55 uppercase tracking-widest truncate">
+                              {activeSector.district} age groups
                             </div>
-                            <div>
-                              <div className="text-[8px] font-mono text-muted-foreground/55 uppercase tracking-widest">Female</div>
-                              <div className="text-sm font-bold font-mono text-white">{formatNumber(activeSector.population_female)}</div>
-                            </div>
+                            <div className="text-[7px] font-mono text-muted-foreground/35 uppercase shrink-0">District-level</div>
                           </div>
-                          <div className="grid grid-cols-2 gap-2 text-[9px] font-mono text-muted-foreground/65">
-                            <span>Female share {formatPercent(activeSector.female_share, 0)}</span>
-                            <span>Sex ratio {formatNumber(activeSector.sex_ratio_male_per_100_female, 1)}</span>
+                          <div className="grid grid-cols-3 gap-1 mt-1">
+                            {[
+                              { label: "0–14", value: activeSector.district_age_share_0_14 },
+                              { label: "15–64", value: activeSector.district_age_share_15_64 },
+                              { label: "65+", value: activeSector.district_age_share_65_plus },
+                            ].map((group) => (
+                              <div key={group.label} className="min-w-0">
+                                <div className="text-[8px] font-mono text-muted-foreground/45">{group.label}</div>
+                                <div className="text-[11px] font-bold font-mono text-cyan-300">
+                                  {formatPercent(group.value, 0)}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 text-[9px] font-mono">
+                      <div className="text-[8px] font-mono text-muted-foreground/45 uppercase tracking-widest mb-1.5">
+                        Indicator score calculation
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 text-[9px] font-mono">
                         {[
-                          { label: "Child dependency", value: formatPercent(activeSector.child_dependency_ratio, 0) },
-                          { label: "Older dependency", value: formatPercent(activeSector.older_dependency_ratio, 0) },
-                          { label: "Total dependency", value: formatPercent(activeSector.total_age_dependency_ratio, 0) },
-                          { label: "Density pressure", value: formatScore(activeSector.component_density_pressure) },
-                          { label: "Rurality context", value: formatScore(activeSector.component_rurality_context) },
-                          { label: "Age-dep context", value: formatScore(activeSector.component_district_age_dependency_context) },
+                          {
+                            label: "Density contribution",
+                            detail: `40% weight · pressure ${formatPercent(activeSector.component_density_pressure, 1)}`,
+                            value: formatContribution(activeSector.component_density_pressure, 0.4),
+                          },
+                          {
+                            label: "Rurality contribution",
+                            detail: `35% weight · rural ${formatPercent(activeSector.rural_share, 0)}`,
+                            value: formatContribution(activeSector.component_rurality_context, 0.35),
+                          },
+                          {
+                            label: "Age contribution",
+                            detail: `25% weight · district dependency ${formatPercent(activeSector.total_age_dependency_ratio, 0)}`,
+                            value: formatContribution(activeSector.component_district_age_dependency_context, 0.25),
+                          },
+                          {
+                            label: "Total score",
+                            detail: "Sum of weighted contributions",
+                            value: formatScoreOutOf100(activeSector.proxy_score),
+                          },
                         ].map((item) => (
                           <div key={item.label} className="rounded bg-background/60 border border-border px-2 py-1.5 min-w-0">
-                            <div className="text-muted-foreground/50 uppercase tracking-widest truncate">{item.label}</div>
-                            <div className="text-cyan-300 font-bold truncate">{item.value}</div>
+                            <div className="text-muted-foreground/50 uppercase tracking-wider leading-tight">{item.label}</div>
+                            <div className="text-[8px] text-muted-foreground/40 leading-tight mt-0.5 min-h-5">{item.detail}</div>
+                            <div className="text-cyan-300 font-bold mt-1">{item.value}</div>
                           </div>
                         ))}
                       </div>
@@ -1018,7 +1083,7 @@ export default function App() {
             ) : (
               <div className="divide-y divide-secondary/60">
                 {filteredRankings.map((sector) => {
-                  const style = riskStyle(sector.proxy_class);
+                  const style = riskStyle(sector.hybrid_vulnerability_class);
                   const active = selSectorId === sector.sector_id;
                   return (
                     <button
@@ -1031,10 +1096,10 @@ export default function App() {
                       <div className="flex items-start gap-2">
                         <span
                           className={`text-[12px] font-mono font-bold shrink-0 mt-0.5 w-7 ${
-                            sector.proxy_rank <= 5 ? "text-red-400" : "text-muted-foreground/40"
+                            sector.hybrid_priority_rank <= 5 ? "text-red-400" : "text-muted-foreground/40"
                           }`}
                         >
-                          {String(sector.proxy_rank).padStart(2, "0")}
+                          {String(sector.hybrid_priority_rank).padStart(2, "0")}
                         </span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-1 mb-0.5">
@@ -1042,7 +1107,7 @@ export default function App() {
                               {sector.sector_name}
                             </span>
                             <span className={`text-[13px] font-bold font-mono shrink-0 ${style.text}`}>
-                              {formatScore(sector.proxy_score)}
+                              {formatScoreOutOf100(sector.hybrid_vulnerability_score).replace(" / ", "/")}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 mb-1.5">
@@ -1050,25 +1115,25 @@ export default function App() {
                             <span className="text-[10px] font-mono text-muted-foreground/60 flex-1 truncate">
                               {sector.district}
                             </span>
-                            <span className={`text-[10px] font-mono shrink-0 ${style.text}`}>{sector.proxy_class}</span>
+                            <span className={`text-[10px] font-mono shrink-0 ${style.text}`}>{sector.hybrid_vulnerability_class}</span>
                           </div>
                           <div className="h-[2px] bg-secondary rounded-full overflow-hidden mb-1.5">
                             <div
-                              className={`h-full rounded-full ${scoreBarColor(sector.proxy_class)}`}
-                              style={{ width: `${Math.min(100, sector.proxy_score * 100)}%` }}
+                              className={`h-full rounded-full ${scoreBarColor(sector.hybrid_vulnerability_class)}`}
+                              style={{ width: `${Math.min(100, sector.hybrid_vulnerability_score * 100)}%` }}
                             />
                           </div>
-                          <div className="flex flex-wrap gap-1">
+                          {/* <div className="flex flex-wrap gap-1">
                             <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-sm border ${style.bg} ${style.text} ${style.border}`}>
-                              proxy {sector.proxy_class}
+                              final {sector.hybrid_vulnerability_class}
                             </span>
                             <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm bg-secondary text-muted-foreground/60">
-                              model {sector.consensus_predicted_class}
+                              indicator {sector.proxy_class}
                             </span>
                             <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm bg-secondary text-muted-foreground/60">
-                              conf {formatPercent(sector.consensus_confidence, 0)}
+                              RF {formatScoreOutOf100(sector.model_vulnerability_score).replace(" / ", "/")}
                             </span>
-                          </div>
+                          </div> */}
                         </div>
                       </div>
                     </button>
@@ -1090,10 +1155,10 @@ export default function App() {
         <div className="flex border-b border-border">
           {[
             { label: "Sectors Assessed", value: String(summary?.sector_count ?? sectorRows.length), icon: MapPin, color: "text-cyan-400" },
-            { label: "High Proxy", value: String(summary?.class_counts?.High ?? 0), icon: AlertTriangle, color: "text-red-400" },
-            { label: "Medium Proxy", value: String(summary?.class_counts?.Medium ?? 0), icon: Zap, color: "text-orange-400" },
-            { label: "Low Proxy", value: String(summary?.class_counts?.Low ?? 0), icon: Shield, color: "text-emerald-400" },
-            { label: "Agreement", value: String(summary?.agreement_count ?? 0), icon: Activity, color: "text-yellow-400" },
+            { label: "High Vulnerability", value: String(summary?.class_counts?.High ?? 0), icon: AlertTriangle, color: "text-red-400" },
+            { label: "Medium Vulnerability", value: String(summary?.class_counts?.Medium ?? 0), icon: Zap, color: "text-orange-400" },
+            { label: "Low Vulnerability", value: String(summary?.class_counts?.Low ?? 0), icon: Shield, color: "text-emerald-400" },
+            { label: "Average Hybrid Score", value: summary ? formatScoreOutOf100(summary.average_hybrid_score) : "n/a", icon: Activity, color: "text-yellow-400" },
             {
               label: "Best Macro F1",
               value: summary?.best_model ? formatPercent(summary.best_model.macro_f1) : "n/a",
@@ -1136,7 +1201,10 @@ export default function App() {
             {infoTab === "model" && (
               <>
                 <span>
-                  <span className="text-muted-foreground">Models:</span> Random Forest + CatBoost
+                  <span className="text-muted-foreground">Final index:</span> 60% Random Forest + 40% census indicator
+                </span>
+                <span>
+                  <span className="text-muted-foreground">Comparison:</span> CatBoost
                 </span>
                 <span>
                   <span className="text-muted-foreground">Rows:</span> {summary?.training_row_count ?? 500}
@@ -1156,7 +1224,7 @@ export default function App() {
                   <span className="text-muted-foreground">Sentinel-2</span> · subunit spectral and terrain summaries
                 </span>
                 <span>
-                  <span className="text-muted-foreground">NISR</span> · population and census-derived proxy inputs
+                  <span className="text-muted-foreground">NISR</span> · population and census-derived vulnerability indicators
                 </span>
                 <span>
                   <span className="text-muted-foreground">GADM</span> · level-3 sector boundaries
@@ -1165,13 +1233,15 @@ export default function App() {
             )}
             {infoTab === "caveat" && (
               <>
-                <span>{summary?.caveat ?? "Proxy-label pilot. Do not interpret as validated Ubudehe prediction."}</span>
+                <span>
+                  Hybrid weights are explicit decision weights; results are not official Ubudehe classifications or household-level assessments.
+                </span>
               </>
             )}
           </div>
           <div className="flex items-center gap-1.5 px-4 shrink-0 text-[9px] font-mono text-muted-foreground/25">
             <Database className="w-3 h-3" />
-            <span>RVIS · API v0.2</span>
+            <span>RVIS · API v0.3</span>
           </div>
         </div>
       </footer>

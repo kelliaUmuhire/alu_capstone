@@ -10,6 +10,9 @@ plus 40% census indicator score. The weights are explicit decision assumptions,
 not learned parameters. Results are not official Ubudehe categories, household
 poverty classifications, or field-validated vulnerability measures.
 
+**See [Demo & Deployments](#demo--deployments) for live dashboard and API access.**
+
+
 ## Repository structure
 
 - `app/api/` - FastAPI service for assessments, metrics, map geometry, and predictions.
@@ -89,3 +92,9 @@ on port `8000`.
 The initial Kigali informal-settlement MVP is preserved under
 `archive/initial_kigali_mvp/`. It is kept for project history and comparison;
 the root-level sector workflow is the current solution.
+
+## Demo & Deployments
+
+* **Demo video**: https://drive.google.com/file/d/12gPL9ca_KbNS6t6xakwEWPPnJTGzm5U_/view?usp=sharing
+* **Dashboard**: https://vulnerability-index.vercel.app/
+* **FastAPI**: https://alu-capstone.onrender.com/docs

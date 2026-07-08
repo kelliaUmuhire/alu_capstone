@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
@@ -80,14 +81,18 @@ app = FastAPI(
     ),
 )
 
+cors_allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:3000,http://localhost:3000",
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "http://localhost:3000",
-    ],
+    allow_origins=cors_allowed_origins,
     allow_origin_regex=r"http://(127\.0\.0\.1|localhost):\d+",
     allow_credentials=False,
     allow_methods=["*"],

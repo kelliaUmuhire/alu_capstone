@@ -31,6 +31,14 @@ Swagger UI:
 http://127.0.0.1:8000/docs
 ```
 
+For a hosted frontend, set the API service's comma-separated allowed origins:
+
+```text
+CORS_ALLOWED_ORIGINS=https://your-dashboard.onrender.com
+```
+
+Multiple frontend origins can be supplied by separating them with commas.
+
 ## Frontend Entry Points
 
 - `GET /dashboard` - compact payload for the dashboard landing state.

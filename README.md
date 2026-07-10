@@ -95,6 +95,6 @@ the root-level sector workflow is the current solution.
 
 ## Demo & Deployments
 
-* **Demo video**: https://drive.google.com/file/d/12gPL9ca_KbNS6t6xakwEWPPnJTGzm5U_/view?usp=sharing
+* **Demo video**: https://youtu.be/ZqFUvmv1pOs
 * **Dashboard**: https://vulnerability-index.vercel.app/
 * **FastAPI**: https://alu-capstone.onrender.com/docs

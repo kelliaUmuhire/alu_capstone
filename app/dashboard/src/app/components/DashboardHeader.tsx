@@ -3,9 +3,10 @@ import { API_BASE_URL } from "../data";
 
 type DashboardHeaderProps = {
   apiUrl: string;
+  page: "dashboard" | "privacy";
 };
 
-export function DashboardHeader({ apiUrl }: DashboardHeaderProps) {
+export function DashboardHeader({ apiUrl, page }: DashboardHeaderProps) {
   return (
     <header className="shrink-0 border-b border-border bg-card px-4 py-2.5 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3 min-w-0">
@@ -28,6 +29,13 @@ export function DashboardHeader({ apiUrl }: DashboardHeaderProps) {
         className="flex items-center gap-5 text-[10px] text-muted-foreground shrink-0"
         style={{ fontFamily: "'JetBrains Mono',monospace" }}
       >
+        <a
+          href={page === "privacy" ? "#dashboard" : "#privacy"}
+          aria-current={page === "privacy" ? "page" : undefined}
+          className="text-cyan-300 hover:text-cyan-200 underline underline-offset-2"
+        >
+          {page === "privacy" ? "Dashboard" : "Privacy & Responsible Use"}
+        </a>
         <span className="flex items-center gap-1.5">
           <Activity className="w-3 h-3 shrink-0" />
           API:

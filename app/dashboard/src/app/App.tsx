@@ -15,6 +15,7 @@ import { BottomFooter } from "./components/BottomFooter";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { FilterSidebar } from "./components/FilterSidebar";
 import { MapPanel } from "./components/MapPanel";
+import { PrivacyPage } from "./components/PrivacyPage";
 import { RankingSidebar } from "./components/RankingSidebar";
 import { SectorDetailCard } from "./components/SectorDetailCard";
 import { StartupPanel } from "./components/StartupPanel";
@@ -22,6 +23,9 @@ import type { DashboardPayload, GadmFeature, MapFeature, SectorAssessment, Secto
 import { apiErrorMessage, clamp } from "./utils";
 
 export default function App() {
+  const [page, setPage] = useState<"dashboard" | "privacy">(() =>
+    window.location.hash === "#privacy" ? "privacy" : "dashboard",
+  );
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [sectorRows, setSectorRows] = useState<SectorAssessment[]>([]);
   const [mapFeatures, setMapFeatures] = useState<MapFeature[]>(FALLBACK_MAP_FEATURES);
@@ -35,6 +39,15 @@ export default function App() {
   const [hovSectorId, setHovSectorId] = useState<string | null>(null);
   const [mapZoom, setMapZoom] = useState(1);
   const [infoTab, setInfoTab] = useState<"model" | "source" | "caveat">("model");
+
+  useEffect(() => {
+    function syncPageFromHash() {
+      setPage(window.location.hash === "#privacy" ? "privacy" : "dashboard");
+    }
+
+    window.addEventListener("hashchange", syncPageFromHash);
+    return () => window.removeEventListener("hashchange", syncPageFromHash);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -152,7 +165,7 @@ export default function App() {
 
   const summary = dashboard?.summary;
   const totalPopulation = summary?.population_total ?? 0;
-  const showStartupPanel = !dashboard && (loading || Boolean(apiError));
+  const showStartupPanel = page === "dashboard" && !dashboard && (loading || Boolean(apiError));
 
   function selectDistrict(district: string) {
     setSelDistrict(district);
@@ -188,64 +201,70 @@ export default function App() {
         />
       )}
 
-      <DashboardHeader apiUrl={API_BASE_URL} />
+      <DashboardHeader apiUrl={API_BASE_URL} page={page} />
 
-      <div className="flex-1 grid grid-cols-[220px_1fr_310px] min-h-0 overflow-hidden">
-        <FilterSidebar
-          summary={summary}
-          sectors={sectorRows}
-          districts={districts}
-          districtCounts={districtCounts}
-          selDistrict={selDistrict}
-          selRisk={selRisk}
-          selSectorId={selSectorId}
-          sectorsForFilter={sectorsForFilter}
-          onReset={resetFilters}
-          onSelectDistrict={selectDistrict}
-          onSelectRisk={handleSelectRisk}
-          onSelectSector={selectSector}
-          onClearSector={() => setSelSectorId(null)}
-        />
+      {page === "privacy" ? (
+        <PrivacyPage />
+      ) : (
+        <>
+          <div className="flex-1 grid grid-cols-[220px_1fr_310px] min-h-0 overflow-hidden">
+            <FilterSidebar
+              summary={summary}
+              sectors={sectorRows}
+              districts={districts}
+              districtCounts={districtCounts}
+              selDistrict={selDistrict}
+              selRisk={selRisk}
+              selSectorId={selSectorId}
+              sectorsForFilter={sectorsForFilter}
+              onReset={resetFilters}
+              onSelectDistrict={selectDistrict}
+              onSelectRisk={handleSelectRisk}
+              onSelectSector={selectSector}
+              onClearSector={() => setSelSectorId(null)}
+            />
 
-        <div className="flex flex-col overflow-hidden">
-          <MapPanel
-            mapViewBox={mapViewBox}
-            filteredMapFeatures={filteredMapFeatures}
-            activeMapFeature={activeMapFeature}
-            activeSector={activeSector}
-            selSectorId={selSectorId}
-            hovSectorId={hovSectorId}
-            mapZoom={mapZoom}
-            onZoomIn={() => setMapZoom((zoom) => clamp(zoom + MAP_ZOOM_STEP, MAP_ZOOM_MIN, MAP_ZOOM_MAX))}
-            onZoomOut={() => setMapZoom((zoom) => clamp(zoom - MAP_ZOOM_STEP, MAP_ZOOM_MIN, MAP_ZOOM_MAX))}
-            onHoverSector={setHovSectorId}
-            onSelectSector={selectSector}
-            onClearSelection={() => setSelSectorId(null)}
-          />
+            <div className="flex flex-col overflow-hidden">
+              <MapPanel
+                mapViewBox={mapViewBox}
+                filteredMapFeatures={filteredMapFeatures}
+                activeMapFeature={activeMapFeature}
+                activeSector={activeSector}
+                selSectorId={selSectorId}
+                hovSectorId={hovSectorId}
+                mapZoom={mapZoom}
+                onZoomIn={() => setMapZoom((zoom) => clamp(zoom + MAP_ZOOM_STEP, MAP_ZOOM_MIN, MAP_ZOOM_MAX))}
+                onZoomOut={() => setMapZoom((zoom) => clamp(zoom - MAP_ZOOM_STEP, MAP_ZOOM_MIN, MAP_ZOOM_MAX))}
+                onHoverSector={setHovSectorId}
+                onSelectSector={selectSector}
+                onClearSelection={() => setSelSectorId(null)}
+              />
 
-          <div className="px-6 pb-4">
-            <SectorDetailCard
-              activeSector={activeSector}
-              filteredMapFeatures={filteredMapFeatures}
-              loading={loading}
+              <div className="px-6 pb-4">
+                <SectorDetailCard
+                  activeSector={activeSector}
+                  filteredMapFeatures={filteredMapFeatures}
+                  loading={loading}
+                />
+              </div>
+            </div>
+
+            <RankingSidebar
+              filteredRankings={filteredRankings}
+              selSectorId={selSectorId}
+              totalPopulation={totalPopulation}
+              onSelectSector={selectSector}
             />
           </div>
-        </div>
 
-        <RankingSidebar
-          filteredRankings={filteredRankings}
-          selSectorId={selSectorId}
-          totalPopulation={totalPopulation}
-          onSelectSector={selectSector}
-        />
-      </div>
-
-      <BottomFooter
-        summary={summary}
-        sectorRowsLength={sectorRows.length}
-        infoTab={infoTab}
-        onTabChange={setInfoTab}
-      />
+          <BottomFooter
+            summary={summary}
+            sectorRowsLength={sectorRows.length}
+            infoTab={infoTab}
+            onTabChange={setInfoTab}
+          />
+        </>
+      )}
     </div>
   );
 }

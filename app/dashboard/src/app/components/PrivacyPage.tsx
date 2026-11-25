@@ -32,9 +32,6 @@ const sections = [
         <p>
           The documented research implementation uses sector-level information rather than individual household vulnerability profiles. The dashboard does not document a feature for residents to submit household information or personal research responses.
         </p>
-        <p className="mt-3 rounded border border-amber-400/25 bg-amber-400/5 p-3 text-amber-200">
-          Verify the live application&apos;s actual data collection, hosting logs, analytics and account settings before publishing this statement.
-        </p>
       </>
     ),
   },
@@ -93,7 +90,7 @@ export function PrivacyPage() {
               For questions about this research project or the interpretation of its results, contact:
             </p>
             <p className="mt-2 text-sm font-medium text-cyan-200">
-              [INSERT AN ACTUAL AUTHORISED PROJECT OR INSTITUTIONAL CONTACT]
+              k.umuhire@alustudent.com
             </p>
           </section>
         </div>
